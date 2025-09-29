@@ -1,0 +1,26 @@
+* *,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body,
+#root {
+  min-height: 100vh;
+  font-size: 16px;
+  background: #e6ecfa;
+  font-family: "PT Sans", "Quicksand", sans-serif;
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+// variables
+
+$primary: #393ea8;
+$secondary: #23272f;
+$accent: #38a169;
+$error: #e53e3e;
+$bg: #f8f9fb;
