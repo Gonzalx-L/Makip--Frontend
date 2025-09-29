@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Caja -->
+  <rect x="16" y="28" width="32" height="24" rx="2" fill="#F4A261" stroke="#4A148C" stroke-width="2"></rect>
+  <path d="M16 36h32" stroke="#4A148C" stroke-width="2"></path>
+  <path d="M32 28v24" stroke="#4A148C" stroke-width="2"></path>
+
+  <!-- Administrador (cabeza) -->
+  <circle cx="32" cy="14" r="8" fill="#E0E0E0" stroke="#4A148C" stroke-width="2"></circle>
+
+  <!-- Cuerpo del administrador -->
+  <rect x="24" y="22" width="16" height="6" rx="2" fill="#6C63FF" stroke="#4A148C" stroke-width="2"></rect>
+</svg>
