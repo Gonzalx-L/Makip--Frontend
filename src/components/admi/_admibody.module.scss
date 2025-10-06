@@ -1,0 +1,22 @@
+.body {
+  flex: 1;
+  background: #e9edfa;
+  padding: 24px;
+  min-height: 0;
+  border-bottom-right-radius: 18px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 0;
+  margin: 0; // <--- Sin margen para que encaje
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+h1 {
+  text-align: center;
+}
+@media (max-width: 900px) {
+  .body {
+    padding: 10px 4px;
+    border-bottom-right-radius: 12px;
+  }
+}

@@ -5,6 +5,48 @@ $sidebar-bg-active: #222328;
 $primary-color: #f5f6fa;
 $hover-color: #222328;
 
+// .sidebar {
+//   width: $sidebar-width;
+//   min-height: 100vh;
+//   background: $sidebar-bg;
+//   display: flex;
+//   flex-direction: column;
+//   padding: 1.2rem 1rem;
+//   transition: left 0.3s;
+//   position: fixed;
+//   left: 0;
+//   top: 0;
+//   z-index: 200;
+// }
+
+// .closed {
+//   left: -$sidebar-width;
+// }
+
+// .open {
+//   left: 0;
+// }
+
+// .menuBtn {
+//   display: none;
+//   position: fixed;
+//   top: 1rem;
+//   left: 1rem;
+//   z-index: 250;
+//   background: none;
+//   border: none;
+//   flex-direction: column;
+//   gap: 5px;
+
+//   span {
+//     display: block;
+//     width: 28px;
+//     height: 4px;
+//     background: #fff;
+//     border-radius: 3px;
+//     margin: 3px 0;
+//   }
+// }
 .sidebar {
   width: $sidebar-width;
   min-height: 100vh;
@@ -13,41 +55,31 @@ $hover-color: #222328;
   flex-direction: column;
   padding: 1.2rem 1rem;
   transition: left 0.3s;
-  position: fixed;
-  left: 0;
-  top: 0;
+  position: relative; // <- importante para layout puzzle
   z-index: 200;
 }
 
-.closed {
-  left: -$sidebar-width;
-}
-
-.open {
-  left: 0;
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    left: -$sidebar-width;
+    top: 0;
+    width: $sidebar-width;
+    z-index: 200;
+    transition: left 0.3s;
+    border-radius: 0 18px 18px 0;
+  }
+  .open {
+    left: 0;
+  }
 }
 
 .menuBtn {
   display: none;
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  z-index: 250;
-  background: none;
-  border: none;
-  flex-direction: column;
-  gap: 5px;
-
-  span {
-    display: block;
-    width: 28px;
-    height: 4px;
-    background: #fff;
-    border-radius: 3px;
-    margin: 3px 0;
+  @media (max-width: 900px) {
+    display: flex;
   }
 }
-
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
