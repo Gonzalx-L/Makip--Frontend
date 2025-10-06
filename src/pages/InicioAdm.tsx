@@ -1,5 +1,4 @@
-const InicioAdm = ()=>(
-    <h1> pagina de inicio .................dale </h1>
+import AdmiSiderbar from "../components/admi/AdmiSiderbar";
 
-)
+const InicioAdm = () => <AdmiSiderbar />;
 export default InicioAdm;
