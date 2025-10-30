@@ -1,12 +1,11 @@
-import styles from "./_inicioadm.module.scss";
-import AdmiSiderbar from "../components/admi/AdmiSiderbar";
-import AdmiNavbar from "../components/admi/AdmiNavbar";
-import AdmiBody from "../components/admi/AdmiBody";
+import AdmiSiderbar from "../components/features/admi/AdmiSiderbar";
+import AdmiNavbar from "../components/features/admi/AdmiNavbar";
+import AdmiBody from "../components/features/admi/AdmiBody";
 
 const InicioAdm = () => (
-  <div className={styles.layoutContainer}>
+  <div className="flex h-screen bg-gray-50">
     <AdmiSiderbar />
-    <div className={styles.contentColumn}>
+    <div className="flex-1 flex flex-col overflow-hidden">
       <AdmiNavbar />
       <AdmiBody>{/* Tu dashboard, grid, cards, etc */}</AdmiBody>
     </div>
