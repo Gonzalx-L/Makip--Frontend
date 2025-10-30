@@ -1,5 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import producto1Image from '../../assets/03.png';
+import producto2Image from '../../assets/04.png';
+import producto3Image from '../../assets/02.png';
 
 const HomePage: React.FC = () => {
   return (
@@ -62,19 +65,19 @@ const HomePage: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
               <div className="relative overflow-hidden">
                 <img 
-                  src="/api/placeholder/300/200" 
+                  src={producto1Image} 
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" 
                   alt="Producto 1" 
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+                <div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Producto Destacado 1</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">POLERA PERSONALIZADA</h3>
                 <p className="text-gray-600 mb-4 line-clamp-2">
                   Descripción breve del producto con sus características principales.
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-blue-600">$99.99</span>
+                  <span className="text-2xl font-bold text-blue-600">S/15.00</span>
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
                     Ver más
                   </button>
@@ -86,19 +89,19 @@ const HomePage: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
               <div className="relative overflow-hidden">
                 <img 
-                  src="/api/placeholder/300/200" 
+                  src={producto2Image} 
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" 
                   alt="Producto 2" 
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+                <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Producto Destacado 2</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">TAZA PERZONALIZABLE</h3>
                 <p className="text-gray-600 mb-4 line-clamp-2">
                   Otro producto increíble con excelente calidad y precio.
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-blue-600">$149.99</span>
+                  <span className="text-2xl font-bold text-blue-600">S/15.00</span>
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
                     Ver más
                   </button>
@@ -110,19 +113,19 @@ const HomePage: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
               <div className="relative overflow-hidden">
                 <img 
-                  src="/api/placeholder/300/200" 
+                  src={producto3Image} 
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" 
                   alt="Producto 3" 
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+                <div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Producto Destacado 3</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">PORTALAZOS</h3>
                 <p className="text-gray-600 mb-4 line-clamp-2">
                   El producto perfecto para completar tu colección.
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-blue-600">$79.99</span>
+                  <span className="text-2xl font-bold text-blue-600">S/10.00</span>
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
                     Ver más
                   </button>
@@ -149,8 +152,7 @@ const HomePage: React.FC = () => {
             <div className="relative">
               <div className="rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
                 <img 
-                  src="/api/placeholder/500/400" 
-                  alt="Sobre nosotros" 
+                  src="/src/assets/Nosotros.jpg"
                   className="w-full h-auto object-cover"
                 />
               </div>
