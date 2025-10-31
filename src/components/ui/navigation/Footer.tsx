@@ -24,7 +24,7 @@ export const Footer = () => {
           {/* Copyright */}
           <div className="-translate-x-24 text-gray-400 text-sm mt-8">
             <p>© 2025 Makip te crea. Todos los derechos reservados.</p>
-            <p>ToriGO! es un servicio informativo y no se constituye como proveedor de transporte ni de servicios de taxi. Los servicios de transporte están a cargo de terceros.</p>
+            <p>Makip te crea es una empresa de merchandising</p>
           </div>
 
           <div className="flex justify-end -translate-x-20">

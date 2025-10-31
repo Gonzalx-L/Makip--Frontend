@@ -37,6 +37,11 @@ function App() {
         {/* --- GRUPO 2: Rutas de Pantalla Completa (SIN Header/Footer) --- */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} /> 
+        
+        {/* 2. AÑADE LA NUEVA RUTA AQUÍ */}
+        <Route path="/registro" element={<RegisterPage />} /> 
+        {/* (Usamos /registro para que coincida con el botón de tu HomePage) */}
+
         <Route path="/admin" element={<InicioAdm />} />
         <Route path="/login-admin" element={<LoginAdm />} /> 
 
