@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import logoMakip from '../../../assets/Makip-logo.png';
 
 export const NavBar = () => {
   const location = useLocation();
@@ -15,9 +16,9 @@ export const NavBar = () => {
           <div className="flex items-center">
             <Link to="/" className="hover:opacity-80 transition-opacity">
               <img 
-                src="/src/assets/Makip-logo.png" 
+                src={logoMakip} 
                 alt="Makip" 
-                className="h-16 w-auto object-contain" 
+                className="w-40 h-auto object-contain" 
               />
             </Link>
           </div>
