@@ -10,6 +10,7 @@ import TrackingPage from './pages/public/TrackingPage';
 import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 
+
 // Admin
 import LoginAdm from "./pages/LoginAdm"
 import InicioAdm from './pages/InicioAdm';
@@ -32,6 +33,7 @@ function App() {
           <Route path="/productos" element={<ProductsPage />} />
           <Route path="/tracking/:orderId" element={<TrackingPage />} />
           <Route path="/nosotros" element={<AboutPage />} /> {/* <-- ¡AQUÍ ESTÁ LA RUTA DE REN! */}
+          {/* Aquí puedes agregar /productos, /contacto, etc. */}
         </Route>
 
         {/* --- GRUPO 2: Rutas de Pantalla Completa (SIN Header/Footer) --- */}
