@@ -28,8 +28,13 @@ export const Footer = () => {
           </div>
 
           <div className="flex justify-end -translate-x-20">
-            <a href="https://www.youtube.com">
-              <img src="/src/assets/libro.png" alt="Libro" className="w-20 h-10" />      
+            <a 
+              href="/documents/terminos-y-condiciones.pdf" 
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Términos y Condiciones"
+            >
+              <img src="/src/assets/libro.png" alt="Términos y Condiciones" className="w-20 h-10 hover:opacity-80 transition-opacity" />      
             </a>
           </div>
 

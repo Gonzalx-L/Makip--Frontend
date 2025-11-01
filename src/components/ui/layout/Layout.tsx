@@ -1,6 +1,7 @@
 import React from 'react';
 import NavBar from '../navigation/NavBar';
 import { Footer } from '../navigation/Footer';
+import WhatsAppButton from '../WhatsAppButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
       <Footer />
+      
+      {/* Botón flotante de WhatsApp */}
+      <WhatsAppButton 
+        phoneNumber="51923119167" // Cambia este número por el tuyo
+        position="right"
+      />
     </div>
   );
 };
