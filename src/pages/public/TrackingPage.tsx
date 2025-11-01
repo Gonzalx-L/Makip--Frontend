@@ -20,7 +20,7 @@ const TrackingPage: React.FC = () => {
   // (Aquí iría un useEffect para cargar los datos reales)
 
   return (
-      <div className="pt-20 bg-gray-100 min-h-screen"> {/* pt-20 para el navbar */}
+      <div className="pt-20 bg-indigo-100 min-h-screen"> {/* pt-20 para el navbar */}
         
         {/* 2. Muestra el componente "feature" */}
         {trackingInfo ? (

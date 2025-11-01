@@ -13,4 +13,6 @@ export interface TrackingInfo {
   carrier: string; // "MKPAG00780PER"
   carrierTrackingId: string;
   updates: TrackingUpdate[]; // La lista de pasos
+  productName: string;   // Nombre del producto a mostrar
+  productImage?: string; // Hacemos la imagen opcional (por si no hay)
 }
