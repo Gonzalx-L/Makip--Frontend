@@ -13,6 +13,7 @@ interface CartState {
   addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
+  decreaseQuantity: (productId: string) => void;
 }
 
 // --- Lógica del Store ---
@@ -41,7 +42,19 @@ export const useCartStore = create<CartState>((set) => ({
       }
     }),
 
-  // (Las dejaremos aquí para el futuro)
+  // Acción para disminuir la cantidad de un producto
+  decreaseQuantity: (productId) =>
+    set((state) => {
+      const updatedItems = state.items.map((item) =>
+        item.product.id === productId
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+        .filter((item) => item.quantity > 0); // Filtra los items que lleguen a 0
+
+      return { items: updatedItems };
+    }),
+  // Acción para eliminar un producto del carrito
   removeFromCart: (productId) =>
     set((state) => ({
       items: state.items.filter((item) => item.product.id !== productId),

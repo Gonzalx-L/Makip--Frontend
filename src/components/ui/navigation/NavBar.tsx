@@ -1,9 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import logoMakip from '../../../assets/Makip-logo.png';
+import { useCartStore } from '../../../store/cartStore'; 
+import { FaShoppingCart } from 'react-icons/fa'; 
 
 export const NavBar = () => {
   const location = useLocation();
-
+  const items = useCartStore((state) => state.items);
+  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -66,11 +69,14 @@ export const NavBar = () => {
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
             {/* Cart */}
-            <Link to="/carrito" className="text-white hover:text-blue-200 relative">
-              <i className="fas fa-shopping-cart text-xl"></i>
-              <span className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded-full font-bold">
-                0
-              </span>
+            <Link to="/cart" className="text-white hover:text-blue-200 relative">
+              <FaShoppingCart className="text-xl" />
+              {/* Muestra la burbuja SÓLO si hay items */}
+              {totalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded-full font-bold">
+                  {totalItems}
+                </span>
+              )}
             </Link>
 
             {/* Login button */}
