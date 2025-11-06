@@ -14,12 +14,19 @@ export interface RegisterData {
 
 export interface Client {
   client_id: number;
+  google_uid: string;
   email: string;
   name: string;
   phone?: string;
   address?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface GoogleAuthResponse {
+  message: string;
+  client: Client;
+  isNewUser: boolean;
 }
 
 export interface AuthResponse {
@@ -29,7 +36,19 @@ export interface AuthResponse {
 }
 
 export const authService = {
-  // Iniciar sesión
+  // Autenticación con Google
+  loginWithGoogle: async (googleToken: string): Promise<GoogleAuthResponse> => {
+    const response = await apiClient.post('/auth/google', { token: googleToken });
+    const { client, isNewUser } = response.data;
+    
+    // Guardar datos del cliente en localStorage
+    localStorage.setItem('client', JSON.stringify(client));
+    localStorage.setItem('isAuthenticated', 'true');
+    
+    return response.data;
+  },
+
+  // Iniciar sesión (endpoint tradicional - si lo tienes)
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/login', credentials);
     const { client, token } = response.data;
@@ -57,6 +76,7 @@ export const authService = {
   logout: (): void => {
     localStorage.removeItem('token');
     localStorage.removeItem('client');
+    localStorage.removeItem('isAuthenticated');
   },
 
   // Obtener cliente actual
@@ -67,7 +87,7 @@ export const authService = {
 
   // Verificar si está autenticado
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('token');
+    return localStorage.getItem('isAuthenticated') === 'true' || !!localStorage.getItem('token');
   },
 
   // Verificar token (si tienes endpoint para esto)

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import Layout from './components/ui/layout/Layout';
 import ScrollToTop from './components/common/ScrollToTop';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Públicas
 import HomePage from './pages/public/HomePage';
@@ -25,9 +26,10 @@ const PublicLayoutWrapper = () => (
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop/>
-      <Routes>
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop/>
+        <Routes>
         {/* --- GRUPO 1: Rutas Públicas (CON Header/Footer) --- */}
         <Route element={<PublicLayoutWrapper />}>
           <Route path="/" element={<HomePage />} />
@@ -51,7 +53,8 @@ function App() {
         <Route path="/login-admin" element={<LoginAdm />} />
 
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 

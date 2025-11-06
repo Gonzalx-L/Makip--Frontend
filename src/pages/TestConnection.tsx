@@ -23,7 +23,7 @@ export const TestConnection: React.FC = () => {
         )}
       </div>
 
-      {products && (
+      {products && products.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold mb-2">Productos desde Backend:</h2>
           <div className="space-y-2">
@@ -36,6 +36,18 @@ export const TestConnection: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {products && products.length === 0 && (
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded">
+          <h3 className="text-blue-800 font-semibold">✨ ¡Conexión perfecta!</h3>
+          <p className="text-blue-700">La base de datos está vacía. Para probar completamente:</p>
+          <ul className="text-blue-600 text-sm mt-2 ml-4">
+            <li>• Agrega productos desde el panel de admin</li>
+            <li>• O inserta datos de prueba en PostgreSQL</li>
+            <li>• Entonces verás los productos aquí</li>
+          </ul>
         </div>
       )}
 
