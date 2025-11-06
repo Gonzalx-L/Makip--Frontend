@@ -12,7 +12,7 @@ export const NavBar = () => {
   };
 
   return (
-    <nav className="bg-blue-600 shadow-lg">
+    <nav className="bg-black shadow-lg">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -80,7 +80,7 @@ export const NavBar = () => {
             </Link>
 
             {/* Login button */}
-            <Link to="/login" className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">
+            <Link to="/login" className="bg-white text-teal-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">
               Iniciar sesión
             </Link>
 
