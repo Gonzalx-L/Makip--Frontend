@@ -34,7 +34,7 @@ const ProductsPage: React.FC = () => {
             </label>
             <input 
               type="range" 
-              id="precio" 
+              id="precio"
               className="w-full"
               min="0"
               max="500" 
