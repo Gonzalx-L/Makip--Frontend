@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ProductList } from '../../components/features/products/ProductList';
+import bannerImage from '../../assets/banner1.jpg';
 
 const ProductsPage: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState(500); 
@@ -9,9 +10,10 @@ const ProductsPage: React.FC = () => {
       
       {/* --- BANNER PLACEHOLDER --- */}
       <div className="w-full h-64 bg-gray-300 flex items-center justify-center">
-        <span className="text-gray-600 text-lg font-semibold">
-          (Aquí irá el banner de la página de productos)
-        </span>
+          <img src={bannerImage} 
+          alt="Banner de Productos" 
+          className="w-full h-64 object-fit group-hover:scale-105 transition-transform duration-300" 
+          />
       </div>
 
       {/* --- CONTENIDO DE LA PÁGINA --- */}
