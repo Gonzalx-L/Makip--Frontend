@@ -50,7 +50,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* 5. Y AQUÍ ESTÁ EL BOTÓN ACTUALIZADO */}
         <button 
           onClick={() => addToCart(product)}
-          className="w-full bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-500 transition-colors duration-200"
+          className="w-full bg-teal-300 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors duration-200"
         >
           Agregar al Carrito
         </button>
