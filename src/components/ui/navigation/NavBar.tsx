@@ -21,7 +21,7 @@ export const NavBar = () => {
   };
 
   return (
-    <nav className="bg-blue-600 shadow-lg">
+    <nav className="bg-black shadow-lg">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
