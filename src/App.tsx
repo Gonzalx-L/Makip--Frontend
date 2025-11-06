@@ -10,6 +10,7 @@ import TrackingPage from './pages/public/TrackingPage';
 import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 import CartPage from './pages/public/CartPage';
+import { TestConnection } from './pages/TestConnection';
 
 // Admin
 import LoginAdm from "./pages/LoginAdm"
@@ -34,6 +35,7 @@ function App() {
           <Route path="/tracking/:orderId" element={<TrackingPage />} />
           <Route path="/nosotros" element={<AboutPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/test-connection" element={<TestConnection />} />
           {/* Aquí puedes agregar /productos, /contacto, etc. */}
         </Route>
 

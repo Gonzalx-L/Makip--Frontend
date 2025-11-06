@@ -1,7 +1,8 @@
 import React from 'react';
-// 1. Importamos la 'Product' interface
-import type { Product } from '../../../types'; // <-- Ajusta esta ruta si es necesario
+import type { Product } from '../../../types';
 import { ProductCard } from '../../ui/products/ProductCard';
+import { useApi } from '../../../hooks/useApi';
+import { productService } from '../../../services/productService';
 
 // --- NUESTROS DATOS "MOCK" ACTUALIZADOS ---
 // Ahora coinciden con tu 'Product interface'
@@ -55,9 +56,37 @@ const mockProducts: Product[] = [
 
 
 export const ProductList: React.FC = () => {
+  // Usar el servicio real cuando esté disponible el backend
+  const { data: products, loading, error } = useApi(() => productService.getAll(), []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 mb-4">Error al cargar productos: {error}</p>
+        <p className="text-gray-600">Mostrando productos de ejemplo:</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
+          {mockProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Usar productos del backend si están disponibles, sino usar mock
+  const productsToShow = products || mockProducts;
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {mockProducts.map((product) => (
+      {productsToShow.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
     </div>

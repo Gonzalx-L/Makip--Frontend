@@ -9,17 +9,37 @@ export interface User {
   createdAt: Date;
 }
 
-// Producto
+// Producto - Actualizado para coincidir con tu backend
 export interface Product {
-  id: string;
+  product_id: number;
+  category_id: number;
   name: string;
   description: string;
-  price: number;
-  images: string[];
-  category: string;
-  stock: number;
-  featured: boolean;
-  createdAt: Date;
+  base_price: number;
+  min_order_quantity: number;
+  base_image_url?: string;
+  variants?: any; // JSON con las variantes
+  personalization_metadata?: any; // JSON con metadatos de personalización
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  category_name?: string; // Viene del JOIN con categories
+}
+
+// Interface para crear productos (DTO)
+export interface CreateProductDTO {
+  category_id: number;
+  name: string;
+  description: string;
+  base_price: number;
+  min_order_quantity: number;
+  variants?: any;
+  personalization_metadata?: any;
+}
+
+// Interface para actualizar productos (DTO)
+export interface UpdateProductDTO extends Partial<CreateProductDTO> {
+  is_active?: boolean;
 }
 
 // Carrito
