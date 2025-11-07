@@ -12,6 +12,7 @@ import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 import CartPage from './pages/public/CartPage';
 import ProductDetailPage from './pages/public/ProductDetailPage';
+import ContactPage from './pages/public/ContactPage';
 import { TestConnection } from './pages/TestConnection';
 
 // Admin
@@ -38,6 +39,7 @@ function App() {
           <Route path="/productos/:id" element={<ProductDetailPage />} />
           <Route path="/tracking/:orderId" element={<TrackingPage />} />
           <Route path="/nosotros" element={<AboutPage />} />
+          <Route path="/contacto" element={<ContactPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/test-connection" element={<TestConnection />} />
           {/* Aquí puedes agregar /productos, /contacto, etc. */}
