@@ -4,52 +4,83 @@ import { ProductCard } from '../../ui/products/ProductCard';
 import { useApi } from '../../../hooks/useApi';
 import { productService } from '../../../services/productService';
 
-// --- NUESTROS DATOS "MOCK" ACTUALIZADOS ---
-// Ahora coinciden con tu 'Product interface'
+// --- DATOS MOCK ACTUALIZADOS PARA NUEVA ESTRUCTURA BD ---
 const mockProducts: Product[] = [
   { 
-    id: '1', 
+    product_id: 1, 
+    category_id: 1,
     name: 'Muñeca Tejida', 
-    description: 'Linda muñeca tejida a mano.',
-    price: 39.00, 
-    images: [], // <-- Dejamos el array vacío, como pediste
-    category: 'tejidos',
-    stock: 10,
-    featured: true,
-    createdAt: new Date()
+    description: 'Linda muñeca tejida a mano con materiales de alta calidad.',
+    base_price: 39000, // En centavos (39.00 soles)
+    min_order_quantity: 1,
+    base_image_url: 'https://via.placeholder.com/400x400/EC4899/FFFFFF?text=Muñeca+Tejida',
+    variants: {
+      colores: ['Rosado', 'Azul', 'Amarillo'],
+      tamaños: ['Pequeña', 'Mediana']
+    },
+    personalization_metadata: {
+      cost: 5000, // 5 soles adicionales
+      max_text_length: 20
+    },
+    is_active: true,
+    category_name: 'Tejidos'
   },
   { 
-    id: '2', 
+    product_id: 2,
+    category_id: 2, 
     name: 'Llaveros Personalizados', 
-    description: 'Llaveros con tu nombre o logo.',
-    price: 35.00, 
-    images: [], 
-    category: 'accesorios',
-    stock: 20,
-    featured: true,
-    createdAt: new Date()
+    description: 'Llaveros acrílicos con tu nombre o logo personalizado.',
+    base_price: 8000, // 8 soles
+    min_order_quantity: 5,
+    base_image_url: 'https://via.placeholder.com/400x400/3B82F6/FFFFFF?text=Llavero',
+    variants: {
+      formas: ['Circular', 'Cuadrado', 'Corazón'],
+      colores: ['Transparente', 'Blanco', 'Negro']
+    },
+    personalization_metadata: {
+      cost: 2000, // 2 soles adicionales
+      max_text_length: 15
+    },
+    is_active: true,
+    category_name: 'Accesorios'
   },
   { 
-    id: '3', 
-    name: 'Polos Estilosos', 
-    description: 'Polos de algodón con diseños únicos.',
-    price: 37.00, 
-    images: [], 
-    category: 'ropa',
-    stock: 15,
-    featured: false,
-    createdAt: new Date()
+    product_id: 3,
+    category_id: 3,
+    name: 'Camisetas Personalizadas', 
+    description: 'Camisetas de algodón 100% con estampado personalizable.',
+    base_price: 25000, // 25 soles
+    min_order_quantity: 1,
+    base_image_url: 'https://via.placeholder.com/400x400/10B981/FFFFFF?text=Camiseta',
+    variants: {
+      tallas: ['S', 'M', 'L', 'XL'],
+      colores: ['Blanco', 'Negro', 'Azul', 'Rojo']
+    },
+    personalization_metadata: {
+      cost: 8000, // 8 soles adicionales
+      max_text_length: 30
+    },
+    is_active: true,
+    category_name: 'Ropa'
   },
   { 
-    id: '4', 
-    name: 'Polos Estampados', 
-    description: 'Estampa lo que quieras en tu polo.',
-    price: 29.00, 
-    images: [], 
-    category: 'ropa',
-    stock: 30,
-    featured: true,
-    createdAt: new Date()
+    product_id: 4,
+    category_id: 2,
+    name: 'Tazas Sublimadas', 
+    description: 'Tazas de cerámica con sublimación de alta calidad.',
+    base_price: 15000, // 15 soles
+    min_order_quantity: 2,
+    base_image_url: 'https://via.placeholder.com/400x400/EF4444/FFFFFF?text=Taza',
+    variants: {
+      colores: ['Blanco', 'Negro'],
+      tamaños: ['11oz', '15oz']
+    },
+    personalization_metadata: {
+      cost: 5000, // 5 soles adicionales
+      max_text_length: 25
+    },
+    is_active: true,
+    category_name: 'Accesorios'
   },
 ];
 // --- FIN DE DATOS MOCK ---
@@ -74,7 +105,7 @@ export const ProductList: React.FC = () => {
         <p className="text-gray-600">Mostrando productos de ejemplo:</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
           {mockProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.product_id} product={product} />
           ))}
         </div>
       </div>
@@ -87,7 +118,7 @@ export const ProductList: React.FC = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {productsToShow.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.product_id} product={product} />
       ))}
     </div>
   );

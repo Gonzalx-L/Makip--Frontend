@@ -43,19 +43,46 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <p className="text-sm text-gray-600 mb-2">
           {product.category_name}
         </p>
+        
+        {/* Descripción truncada */}
+        <p className="text-sm text-gray-700 mb-2 line-clamp-2">
+          {product.description}
+        </p>
+        
+        {/* Precio desde */}
         <p className="text-xl font-bold text-gray-900 my-2">
-          S/ {product.base_price.toFixed(2)}
+          Desde S/ {((typeof product.base_price === 'number' ? product.base_price : parseFloat(product.base_price)) / 100).toFixed(2)}
         </p>
-        <p className="text-xs text-gray-500 mb-3">
-          Mín. cantidad: {product.min_order_quantity}
-        </p>
+        
+        {/* Información adicional */}
+        <div className="flex justify-between text-xs text-gray-500 mb-3">
+          <span>Mín: {product.min_order_quantity}</span>
+          {product.variants && Object.keys(product.variants).length > 0 && (
+            <span className="text-blue-600">✨ Personalizable</span>
+          )}
+        </div>
 
-        <button 
-          onClick={() => addToCart(product)}
-          className="w-full bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-500 transition-colors duration-200"
+        {/* Mostrar variantes disponibles si las hay */}
+        {product.variants && Object.keys(product.variants).length > 0 && (
+          <div className="mb-3">
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(product.variants).slice(0, 2).map(([key, values]) => (
+                <span key={key} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                  {key}: {Array.isArray(values) ? values.slice(0, 2).join(', ') : values}
+                  {Array.isArray(values) && values.length > 2 && '...'}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Botón - ahora va a página de detalle */}
+        <Link 
+          to={`/productos/${product.product_id}`}
+          className="block w-full bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-500 transition-colors duration-200 text-center"
         >
-          Agregar al Carrito
-        </button>
+          Ver Detalles
+        </Link>
       </div>
     </div>
   );

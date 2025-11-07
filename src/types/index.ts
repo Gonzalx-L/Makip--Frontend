@@ -9,7 +9,32 @@ export interface User {
   createdAt: Date;
 }
 
-// Producto - Actualizado para coincidir con tu backend
+// Categoría
+export interface Category {
+  category_id: number;
+  name: string;
+  is_active: boolean;
+}
+
+// Variantes del producto (JSON)
+export interface ProductVariants {
+  tallas?: string[];
+  colores?: string[];
+  materiales?: string[];
+  [key: string]: string[] | undefined;
+}
+
+// Metadata de personalización (JSON)
+export interface PersonalizationMetadata {
+  cost?: number;
+  coords_x?: number;
+  coords_y?: number;
+  max_text_length?: number;
+  allowed_formats?: string[];
+  [key: string]: any;
+}
+
+// Producto completo
 export interface Product {
   product_id: number;
   category_id: number;
@@ -18,12 +43,56 @@ export interface Product {
   base_price: number;
   min_order_quantity: number;
   base_image_url?: string;
-  variants?: any; // JSON con las variantes
-  personalization_metadata?: any; // JSON con metadatos de personalización
+  variants?: ProductVariants;
+  personalization_metadata?: PersonalizationMetadata;
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  category_name?: string; // Viene del JOIN con categories
+}
+
+// Estados de pedido (ENUM)
+export type OrderStatus = 
+  | 'NO_PAGADO'
+  | 'PAGO_EN_VERIFICACION' 
+  | 'PENDIENTE'
+  | 'EN_EJECUCION'
+  | 'TERMINADO'
+  | 'CANCELADO';
+
+// Datos de personalización por item (JSON)
+export interface PersonalizationData {
+  text?: string;
+  image_url?: string;
+  color?: string;
+  size?: string;
+  material?: string;
+  [key: string]: any;
+}
+
+// Item del pedido
+export interface OrderItem {
+  order_item_id: number;
+  order_id: number;
+  product_id: number;
+  quantity: number;
+  item_price: number;
+  personalization_data?: PersonalizationData;
+  product?: Product; // Para mostrar datos del producto
+}
+
+// Pedido completo
+export interface Order {
+  order_id: number;
+  client_id: number;
+  status: OrderStatus;
+  total_price: number;
+  payment_proof_url?: string;
+  invoice_pdf_url?: string;
+  due_date?: string;
   created_at: string;
   updated_at: string;
-  category_name?: string; // Viene del JOIN con categories
+  items?: OrderItem[]; // Items del pedido
 }
 
 // Interface para crear productos (DTO)
@@ -42,26 +111,18 @@ export interface UpdateProductDTO extends Partial<CreateProductDTO> {
   is_active?: boolean;
 }
 
-// Carrito
+// Carrito (actualizado)
 export interface CartItem {
-  productId: string;
   product: Product;
   quantity: number;
+  selectedVariants?: { [key: string]: string }; // ej: { "talla": "M", "color": "Rojo" }
+  personalization?: PersonalizationData;
+  calculated_price: number; // precio base + personalizaciones
 }
 
 export interface Cart {
   items: CartItem[];
   total: number;
-}
-
-// Orden
-export interface Order {
-  id: string;
-  userId: string;
-  items: CartItem[];
-  total: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  createdAt: Date;
 }
 
 // Estados de autenticación

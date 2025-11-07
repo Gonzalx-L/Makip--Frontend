@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { authService, type Client } from '../services/authService';
+import { useCartStore } from '../store/cartStore';
 
 export const useAuth = () => {
   const [user, setUser] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
+  const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
     // Verificar si hay usuario guardado al cargar la aplicación
@@ -32,6 +34,7 @@ export const useAuth = () => {
   const logout = () => {
     authService.logout();
     setUser(null);
+    clearCart(); // Limpiar carrito al cerrar sesión
   };
 
   return {

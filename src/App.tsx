@@ -11,6 +11,7 @@ import TrackingPage from './pages/public/TrackingPage';
 import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 import CartPage from './pages/public/CartPage';
+import ProductDetailPage from './pages/public/ProductDetailPage';
 import { TestConnection } from './pages/TestConnection';
 
 // Admin
@@ -34,6 +35,7 @@ function App() {
         <Route element={<PublicLayoutWrapper />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/productos" element={<ProductsPage />} />
+          <Route path="/productos/:id" element={<ProductDetailPage />} />
           <Route path="/tracking/:orderId" element={<TrackingPage />} />
           <Route path="/nosotros" element={<AboutPage />} />
           <Route path="/cart" element={<CartPage />} />
