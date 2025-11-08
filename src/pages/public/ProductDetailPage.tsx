@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { productService } from '../../services/productService';
@@ -92,17 +92,33 @@ const ProductDetailPage: React.FC = () => {
   const addToCart = useCartStore((state) => state.addToCart);
   const { isAuthenticated } = useAuthContext();
   
+  // Todos los hooks ANTES de cualquier lógica condicional
   const { data: backendProduct, loading, error } = useApi(
-    () => productService.getById(Number(id)), 
+    () => productService.getById(Number(id || '0')), 
     [id]
   );
-
-  // Usar producto del backend si existe, sino usar mock
-  const product = backendProduct || mockProducts.find(p => p.product_id === Number(id));
 
   const [selectedVariants, setSelectedVariants] = useState<{ [key: string]: string }>({});
   const [personalization, setPersonalization] = useState<PersonalizationData>({});
   const [quantity, setQuantity] = useState(1);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  
+  // Hook de efecto para validar campos al cargar el producto
+  useEffect(() => {
+    // La validación se ejecutará cuando el usuario haga clic en "Agregar al carrito"
+    // Por ahora solo observamos los cambios del ID
+  }, [id]);
+  
+  // AHORA sí podemos hacer validaciones condicionales
+  // Test rápido: Si no hay ID, redirigir
+  if (!id) {
+    console.log('ProductDetailPage - No hay ID, redirigiendo a productos');
+    navigate('/productos');
+    return null;
+  }
+
+  // Usar producto del backend si existe, sino usar mock
+  const product = backendProduct || mockProducts.find(p => p.product_id === Number(id));
 
   if (loading) {
     return (
@@ -121,7 +137,8 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  if (!product) {
+  // Early return si no hay producto y no está cargando
+  if (!product && !loading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -140,11 +157,33 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
+  // Early return si aún está cargando o no hay producto
+  if (loading || !product) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-gray-300 h-96 rounded-lg"></div>
+            <div className="space-y-4">
+              <div className="bg-gray-300 h-8 rounded"></div>
+              <div className="bg-gray-300 h-4 rounded"></div>
+              <div className="bg-gray-300 h-6 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const handleVariantChange = (variantKey: string, value: string) => {
     setSelectedVariants(prev => ({
       ...prev,
       [variantKey]: value
     }));
+    // Limpiar errores de validación al seleccionar una variante
+    if (validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
   };
 
   const handlePersonalizationChange = (key: string, value: string) => {
@@ -152,6 +191,10 @@ const ProductDetailPage: React.FC = () => {
       ...prev,
       [key]: value
     }));
+    // Limpiar errores de validación al escribir texto personalizado
+    if (validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
   };
 
   // Función helper para formatear precios (convierte centavos a soles)
@@ -175,6 +218,41 @@ const ProductDetailPage: React.FC = () => {
     return totalPrice;
   };
 
+  const validateRequiredFields = () => {
+    const missingFields: string[] = [];
+    
+    // Validar variantes requeridas
+    if (product.variants) {
+      Object.entries(product.variants).forEach(([variantKey, variantOptions]) => {
+        if (variantOptions && variantOptions.length > 0) {
+          if (!selectedVariants[variantKey]) {
+            // Convertir el nombre de la variante a español
+            const spanishName = variantKey === 'tallas' ? 'Talla' : 
+                               variantKey === 'colores' ? 'Color' : 
+                               variantKey === 'tamaños' ? 'Tamaño' : 
+                               variantKey === 'formas' ? 'Forma' : 
+                               variantKey.charAt(0).toUpperCase() + variantKey.slice(1);
+            missingFields.push(spanishName);
+          }
+        }
+      });
+    }
+    
+    // Validar personalización si está disponible
+    if (product.personalization_metadata && 
+        product.personalization_metadata.max_text_length && 
+        product.personalization_metadata.max_text_length > 0) {
+      if (!personalization.text || personalization.text.trim() === '') {
+        missingFields.push('Texto personalizado');
+      }
+    }
+    
+    // Actualizar el estado de errores
+    setValidationErrors(missingFields);
+    
+    return missingFields;
+  };
+
   const handleAddToCart = () => {
     // Verificar si el usuario está autenticado
     if (!isAuthenticated) {
@@ -189,7 +267,14 @@ const ProductDetailPage: React.FC = () => {
       return;
     }
 
-    // Si está autenticado, proceder normalmente
+    // Validar campos requeridos
+    const missingFields = validateRequiredFields();
+    if (missingFields.length > 0) {
+      // Los errores ya se muestran en la interfaz, simplemente evitar agregar al carrito
+      return;
+    }
+
+    // Si está autenticado y todos los campos están completos, proceder normalmente
     const cartItem = {
       product,
       quantity,
@@ -201,9 +286,11 @@ const ProductDetailPage: React.FC = () => {
     addToCart(cartItem);
     
     // Mostrar confirmación
-    alert(`¡${product.name} agregado al carrito!`);
+    alert(`✅ ¡${product.name} agregado al carrito exitosamente!`);
   };
 
+  console.log('ProductDetailPage - Renderizando producto:', product.name);
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid md:grid-cols-2 gap-8">
@@ -243,28 +330,39 @@ const ProductDetailPage: React.FC = () => {
           </div>
 
           {/* Variantes */}
-          {product.variants && Object.entries(product.variants).map(([variantKey, values]) => (
-            <div key={variantKey}>
-              <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
-                {variantKey}:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {Array.isArray(values) && values.map((value) => (
-                  <button
-                    key={value}
-                    onClick={() => handleVariantChange(variantKey, value)}
-                    className={`px-4 py-2 rounded-lg border ${
-                      selectedVariants[variantKey] === value
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
-                    }`}
-                  >
-                    {value}
-                  </button>
-                ))}
+          {product.variants && Object.entries(product.variants).map(([variantKey, values]) => {
+            const spanishLabel = variantKey === 'tallas' ? 'Tallas' : 
+                                variantKey === 'colores' ? 'Colores' : 
+                                variantKey === 'tamaños' ? 'Tamaños' : 
+                                variantKey === 'formas' ? 'Formas' : 
+                                variantKey.charAt(0).toUpperCase() + variantKey.slice(1);
+            
+            const hasError = validationErrors.includes(spanishLabel.slice(0, -1)); // Quitar la 's' final para comparar
+            
+            return (
+              <div key={variantKey}>
+                <label className={`block text-sm font-medium mb-2 ${hasError ? 'text-red-700' : 'text-gray-700'}`}>
+                  {spanishLabel}: <span className="text-red-500">*</span>
+                  {hasError && <span className="text-red-600 text-xs ml-1">(Requerido)</span>}
+                </label>
+                <div className={`flex flex-wrap gap-2 p-2 rounded-lg ${hasError ? 'bg-red-50 border border-red-200' : ''}`}>
+                  {Array.isArray(values) && values.map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => handleVariantChange(variantKey, value)}
+                      className={`px-4 py-2 rounded-lg border ${
+                        selectedVariants[variantKey] === value
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
+                      }`}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Personalización */}
           {product.personalization_metadata && (
@@ -273,15 +371,20 @@ const ProductDetailPage: React.FC = () => {
               
               {/* Texto personalizado */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Texto personalizado:
+                <label className={`block text-sm font-medium mb-2 ${validationErrors.includes('Texto personalizado') ? 'text-red-700' : 'text-gray-700'}`}>
+                  Texto personalizado: <span className="text-red-500">*</span>
+                  {validationErrors.includes('Texto personalizado') && <span className="text-red-600 text-xs ml-1">(Requerido)</span>}
                 </label>
                 <input
                   type="text"
                   value={personalization.text || ''}
                   onChange={(e) => handlePersonalizationChange('text', e.target.value)}
                   maxLength={product.personalization_metadata.max_text_length || 50}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                  className={`w-full border rounded-lg px-3 py-2 focus:outline-none ${
+                    validationErrors.includes('Texto personalizado')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-300 focus:border-blue-500'
+                  }`}
                   placeholder="Ingresa tu texto aquí..."
                 />
                 {product.personalization_metadata.cost && (
@@ -314,6 +417,20 @@ const ProductDetailPage: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Mensaje de campos requeridos */}
+          {validationErrors.length > 0 && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700 font-medium mb-2">
+                ⚠️ Completa los siguientes campos para continuar:
+              </p>
+              <ul className="text-sm text-red-600 list-disc list-inside space-y-1">
+                {validationErrors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Botón agregar al carrito */}
           <button

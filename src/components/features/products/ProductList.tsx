@@ -61,7 +61,7 @@ const mockProducts: Product[] = [
       max_text_length: 30
     },
     is_active: true,
-    category_name: 'Ropa'
+    category_name: 'Camisetas'
   },
   { 
     product_id: 4,
@@ -80,13 +80,21 @@ const mockProducts: Product[] = [
       max_text_length: 25
     },
     is_active: true,
-    category_name: 'Accesorios'
+    category_name: 'Tazas'
   },
 ];
 // --- FIN DE DATOS MOCK ---
 
 
-export const ProductList: React.FC = () => {
+interface ProductListProps {
+  maxPrice?: number;
+  selectedCategory?: string;
+}
+
+export const ProductList: React.FC<ProductListProps> = ({ 
+  maxPrice = 500, 
+  selectedCategory = 'Todas' 
+}) => {
   // Usar el servicio real cuando esté disponible el backend
   const { data: products, loading, error } = useApi(() => productService.getAll(), []);
 
@@ -99,27 +107,81 @@ export const ProductList: React.FC = () => {
   }
 
   if (error) {
+    // Aplicar filtros también a los productos mock en caso de error
+    const filteredMockProducts = mockProducts.filter((product) => {
+      const priceInSoles = product.base_price / 100;
+      const meetsPriceFilter = priceInSoles <= maxPrice;
+      const meetsCategoryFilter = 
+        selectedCategory === 'Todas' || 
+        product.category_name === selectedCategory;
+      return meetsPriceFilter && meetsCategoryFilter;
+    });
+
     return (
       <div className="text-center py-12">
         <p className="text-red-600 mb-4">Error al cargar productos: {error}</p>
         <p className="text-gray-600">Mostrando productos de ejemplo:</p>
+        
+        {/* Información de filtros */}
+        <div className="mb-4 text-sm text-gray-600">
+          Mostrando {filteredMockProducts.length} productos de {mockProducts.length}
+          {maxPrice < 500 && ` con precio hasta S/ ${maxPrice}`}
+          {selectedCategory !== 'Todas' && ` en la categoría "${selectedCategory}"`}
+        </div>
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
-          {mockProducts.map((product) => (
-            <ProductCard key={product.product_id} product={product} />
-          ))}
+          {filteredMockProducts.length > 0 ? (
+            filteredMockProducts.map((product) => (
+              <ProductCard key={product.product_id} product={product} />
+            ))
+          ) : (
+            <div className="col-span-full">
+              <p className="text-gray-500 text-lg">No se encontraron productos que coincidan con los filtros.</p>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
   // Usar productos del backend si están disponibles, sino usar mock
-  const productsToShow = products || mockProducts;
+  const allProducts = products || mockProducts;
+
+  // Aplicar filtros
+  const filteredProducts = allProducts.filter((product) => {
+    // Filtro de precio: convertir centavos a soles para comparar
+    const priceInSoles = product.base_price / 100;
+    const meetsPriceFilter = priceInSoles <= maxPrice;
+    
+    // Filtro de categoría
+    const meetsCategoryFilter = 
+      selectedCategory === 'Todas' || 
+      product.category_name === selectedCategory;
+    
+    return meetsPriceFilter && meetsCategoryFilter;
+  });
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {productsToShow.map((product) => (
-        <ProductCard key={product.product_id} product={product} />
-      ))}
+    <div>
+      {/* Mostrar información de filtros aplicados */}
+      <div className="mb-4 text-sm text-gray-600">
+        Mostrando {filteredProducts.length} productos de {allProducts.length}
+        {maxPrice < 500 && ` con precio hasta S/ ${maxPrice}`}
+        {selectedCategory !== 'Todas' && ` en la categoría "${selectedCategory}"`}
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map((product) => (
+            <ProductCard key={product.product_id} product={product} />
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <p className="text-gray-500 text-lg">No se encontraron productos que coincidan con los filtros seleccionados.</p>
+            <p className="text-gray-400 text-sm mt-2">Intenta ajustar el precio máximo o cambiar la categoría.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

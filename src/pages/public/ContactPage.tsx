@@ -131,7 +131,6 @@ const ContactPage: React.FC = () => {
                   <p className="font-semibold text-gray-800">📍 Nuestra Ubicación</p>
                   <p className="text-gray-600 text-sm mt-1">
                     Thomas Alva Edison 146, San Martín de Porres 15103<br/>
-                    Zona accesible con transporte público y estacionamiento disponible.
                   </p>
                 </div>
               </div>
