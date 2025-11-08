@@ -1,21 +1,26 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCartStore } from '../../../store/cartStore';
+import { useAuthContext } from '../../../contexts/AuthContext';
 import { FaShoppingCart } from 'react-icons/fa'; // (Asegúrate de tener react-icons)
 
 export const FloatingCartIcon: React.FC = () => {
-  // 1. "Escucha" los cambios en el store
+  // 1. "Escucha" los cambios en el store y usa la función getTotalPrice
   const items = useCartStore((state) => state.items);
+  const getTotalPrice = useCartStore((state) => state.getTotalPrice);
+  const { isAuthenticated } = useAuthContext();
 
-  // 2. Calcula el total de productos y el precio total
+  // 2. Calcula el total de productos y usa la función del store para el precio
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
-  const totalPrice = items.reduce(
-    (total, item) => total + item.product.price * item.quantity,
-    0
-  );
+  const totalPriceInCents = getTotalPrice();
+  
+  // Helper para convertir centavos a soles
+  const formatPrice = (priceInCents: number) => {
+    return (priceInCents / 100).toFixed(2);
+  };
 
-  // 3. Si no hay items, no muestra nada
-  if (totalItems === 0) {
+  // 3. Si no hay items o no está autenticado, no muestra nada
+  if (totalItems === 0 || !isAuthenticated) {
     return null;
   }
 
@@ -35,7 +40,7 @@ export const FloatingCartIcon: React.FC = () => {
         </div>
         {/* Precio Total */}
         <span className="text-lg font-bold">
-          S/ {totalPrice.toFixed(2)}
+          S/ {formatPrice(totalPriceInCents)}
         </span>
       </div>
     </Link>

@@ -1,44 +1,41 @@
 import { create } from 'zustand';
-import type { Product } from '../types'; // Importa tu tipo de Producto
-
-// Define cómo se verá un artículo en el carrito
-export interface CartItem {
-  product: Product;
-  quantity: number;
-}
+import type { CartItem } from '../types';
 
 // Define el estado y las acciones del store
 interface CartState {
   items: CartItem[];
-  addToCart: (product: Product) => void;
-  removeFromCart: (productId: string) => void;
+  addToCart: (product: CartItem) => void;
+  removeFromCart: (productId: number) => void;
   clearCart: () => void;
-  decreaseQuantity: (productId: string) => void;
+  decreaseQuantity: (productId: number) => void;
+  increaseQuantity: (productId: number) => void;
+  getTotalPrice: () => number;
 }
 
 // --- Lógica del Store ---
-export const useCartStore = create<CartState>((set) => ({
+export const useCartStore = create<CartState>((set, get) => ({
   // Estado inicial (un carrito vacío)
   items: [],
 
   // Acción para agregar al carrito
   addToCart: (product) =>
     set((state) => {
+      // Use product.product_id as unique identifier
       const existingItem = state.items.find(
-        (item) => item.product.id === product.id
+        (item) => item.product.product_id === product.product.product_id
       );
 
       if (existingItem) {
         // Si el producto ya existe, solo aumenta la cantidad
         const updatedItems = state.items.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+          item.product.product_id === product.product.product_id
+            ? { ...item, quantity: item.quantity + product.quantity }
             : item
         );
         return { items: updatedItems };
       } else {
         // Si es un producto nuevo, lo agrega a la lista
-        return { items: [...state.items, { product, quantity: 1 }] };
+        return { items: [...state.items, product] };
       }
     }),
 
@@ -46,7 +43,7 @@ export const useCartStore = create<CartState>((set) => ({
   decreaseQuantity: (productId) =>
     set((state) => {
       const updatedItems = state.items.map((item) =>
-        item.product.id === productId
+        item.product.product_id === productId
           ? { ...item, quantity: item.quantity - 1 }
           : item
       )
@@ -54,10 +51,33 @@ export const useCartStore = create<CartState>((set) => ({
 
       return { items: updatedItems };
     }),
+
+  // Acción para aumentar la cantidad de un producto
+  increaseQuantity: (productId) =>
+    set((state) => {
+      const updatedItems = state.items.map((item) =>
+        item.product.product_id === productId
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+      return { items: updatedItems };
+    }),
+
   // Acción para eliminar un producto del carrito
   removeFromCart: (productId) =>
     set((state) => ({
-      items: state.items.filter((item) => item.product.id !== productId),
+      items: state.items.filter((item) => item.product.product_id !== productId),
     })),
   clearCart: () => set({ items: [] }),
+  getTotalPrice: () => {
+    const items = get().items || [];
+    return items.reduce((acc, item) => {
+      const unit =
+        typeof item.calculated_price === 'number'
+          ? item.calculated_price
+          : // fallback to product base_price or 0
+            (item.product && (item.product.base_price as number)) || 0;
+      return acc + unit * item.quantity;
+    }, 0);
+  },
 }));
