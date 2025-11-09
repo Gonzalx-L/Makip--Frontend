@@ -74,7 +74,7 @@ const HomePage: React.FC = () => {
               <div className="p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">CINTAS PERSONALIZADAS</h3>
                 <p className="text-gray-600 mb-4 line-clamp-2">
-                  Cinta personalizada con el diseño que desees.
+                  Cinta sublimada personalizada con el diseño que desees.
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-teal-500">S/15.00</span>

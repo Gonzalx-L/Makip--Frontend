@@ -53,14 +53,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <p className="text-xl font-bold text-gray-900 my-2">
           Desde S/ {((typeof product.base_price === 'number' ? product.base_price : parseFloat(product.base_price)) / 100).toFixed(2)}
         </p>
-
-        {/* 5. Y AQUÍ ESTÁ EL BOTÓN ACTUALIZADO */}
-        <button 
-          onClick={() => addToCart(product)}
-          className="w-full bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-500 transition-colors duration-200"
-        >
-          Ver Detalles
-        </Link>
+        
+        {/* Información adicional */}
+        <div className="flex justify-between text-xs text-gray-500 mb-3">
+          <span>Mín: {product.min_order_quantity}</span>
+          {product.variants && Object.keys(product.variants).length > 0 && (
+            <span className="text-blue-600">✨ Personalizable</span>
+          )}
+        </div>
       </div>
     </div>
   );

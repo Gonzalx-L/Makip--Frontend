@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCartStore } from '../../../store/cartStore';
 import type { CartItem } from '../../../types';
 import { Link } from 'react-router-dom';
 import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
+import { CheckoutModal, PaymentSuccessModal } from '../checkout';
 
 // Componente "hijo" para una sola fila del carrito
 const CartItemRow: React.FC<{ item: CartItem }> = ({ item }) => {
@@ -94,6 +95,9 @@ const CartItemRow: React.FC<{ item: CartItem }> = ({ item }) => {
 // Componente "Padre" principal
 export const CartDetails: React.FC = () => {
   const { items, clearCart, getTotalPrice } = useCartStore();
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [orderId, setOrderId] = useState('');
 
   // Helper para formatear precios (centavos a soles)
   const formatPrice = (priceInCents: number) => {
@@ -105,8 +109,20 @@ export const CartDetails: React.FC = () => {
   const envioInCents = subtotalInCents > 0 ? 1000 : 0; // Envío de S/ 10 (1000 centavos)
   const totalInCents = subtotalInCents + envioInCents;
 
+  const handleCheckout = () => {
+    // Removida la validación - permite checkout siempre para demo visual
+    setIsCheckoutOpen(true);
+  };
+
+  const handlePaymentSuccess = (newOrderId: string) => {
+    setOrderId(newOrderId);
+    setIsCheckoutOpen(false);
+    setIsSuccessOpen(true);
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       
       {/* Columna Izquierda: Lista de Items */}
       <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
@@ -120,7 +136,7 @@ export const CartDetails: React.FC = () => {
         </div>
         
         {items.length === 0 ? (
-          <p className="text-gray-500">Tu carrito está vacío. <Link to="/productos" className="text-blue-600">¡Ve a comprar!</Link></p>
+          <p className="text-gray-500">Tu carrito está vacío. <Link to="/productos" className="text-teal-500">¡Ve a comprar!</Link></p>
         ) : (
           <div>
             {items.map(item => (
@@ -150,11 +166,28 @@ export const CartDetails: React.FC = () => {
               <span>S/ {formatPrice(totalInCents)}</span>
             </div>
           </div>
-          <button className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg mt-6 hover:bg-blue-700 transition-colors">
-            Continuar con la Compra
+          <button 
+            onClick={handleCheckout}
+            className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-bold py-4 rounded-lg mt-6 transition-all duration-300 transform hover:scale-105 shadow-lg"
+          >
+            Continuar
           </button>
         </div>
       </div>
-    </div>
+      </div>
+      
+      {/* Modales */}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+      
+      <PaymentSuccessModal
+        isOpen={isSuccessOpen}
+        orderId={orderId}
+        onClose={() => setIsSuccessOpen(false)}
+      />
+    </>
   );
 };
