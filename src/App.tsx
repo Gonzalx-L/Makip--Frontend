@@ -30,6 +30,7 @@ import { TestConnection } from "./pages/TestConnection";
 // --- Páginas Admin ---
 import LoginAdm from "./pages/Admin/LoginAdm";
 import InicioAdm from "./pages/Admin/InicioAdm";
+import DashboardPage from './pages/DashboardPage';
 import ProductsPageAdmin from "./pages/Admin/ProductsPage";
 import ProductForm from "./pages/Admin/ProductForm";
 import OrdersPage from "./pages/Admin/OrdersPage";
