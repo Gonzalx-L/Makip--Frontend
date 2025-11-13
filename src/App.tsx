@@ -1,10 +1,13 @@
+// src/App.tsx
 import {
   BrowserRouter,
   Routes,
   Route,
   Outlet,
   Navigate,
-} from "react-router-dom"; // 1. Importa Navigate
+} from "react-router-dom";
+
+// --- Layout público ---
 import Layout from "./components/ui/layout/Layout";
 import ScrollToTop from "./components/common/ScrollToTop";
 
@@ -27,6 +30,8 @@ import { TestConnection } from "./pages/TestConnection";
 // --- Páginas Admin ---
 import LoginAdm from "./pages/Admin/LoginAdm";
 import InicioAdm from "./pages/Admin/InicioAdm";
+import ProductsPageAdmin from "./pages/Admin/ProductsPage";
+import ProductForm from "./pages/Admin/ProductForm";
 
 // --- Componentes de Admin ---
 import AdminLayout from "./components/admin/AdminLayout";
@@ -45,8 +50,9 @@ function App() {
       <AdminAuthProvider>
         <BrowserRouter>
           <ScrollToTop />
+
           <Routes>
-            {/* --- GRUPO 1: Rutas Públicas (CON Header/Footer) --- */}
+            {/* ---------- GRUPO 1: Rutas Públicas (CON Header/Footer) ---------- */}
             <Route element={<PublicLayoutWrapper />}>
               <Route path='/' element={<HomePage />} />
               <Route path='/productos' element={<ProductsPage />} />
@@ -58,33 +64,44 @@ function App() {
               <Route path='/test-connection' element={<TestConnection />} />
             </Route>
 
-            {/* --- GRUPO 2: Rutas Públicas (SIN Header/Footer) --- */}
+            {/* ---------- GRUPO 2: Rutas Públicas (SIN Header/Footer) ---------- */}
             <Route path='/login' element={<LoginPage />} />
             <Route path='/registro' element={<RegisterPage />} />
 
-            {/* --- GRUPO 3: Rutas de Admin (CORREGIDAS) --- */}
+            {/* ---------- GRUPO 3: Rutas de Admin ---------- */}
 
-            {/* 1. El Login de Admin es PÚBLICO y único */}
+            {/* Login Admin (público) */}
             <Route path='/admin/login' element={<LoginAdm />} />
 
-            {/* 2. APLICA EL GUARDIÁN Y EL LAYOUT DE ADMIN */}
+            {/* Rutas protegidas de Admin */}
             <Route element={<AdminProtectedRoute />}>
               <Route element={<AdminLayout />}>
-                {/* 3. Esta es la ruta correcta a la que te redirige el login.
-                  Ahora sí existe y está protegida. 
-                */}
+                {/* Dashboard */}
                 <Route path='/admin/dashboard' element={<InicioAdm />} />
 
-                {/* 4. (Opcional) Redirige /admin a /admin/dashboard */}
+                {/* Redirección base /admin -> /admin/dashboard */}
                 <Route
                   path='/admin'
                   element={<Navigate to='/admin/dashboard' replace />}
                 />
 
-                {/* Aquí pondremos las futuras rutas:
-                <Route path='/admin/productos' element={<PaginaProductos />} />
-                <Route path='/admin/ordenes' element={<PaginaOrdenes />} />
-                */}
+                {/* Listado de productos Admin */}
+                <Route
+                  path='/admin/productos'
+                  element={<ProductsPageAdmin />}
+                />
+
+                {/* Crear producto */}
+                <Route
+                  path='/admin/productos/nuevo'
+                  element={<ProductForm />}
+                />
+
+                {/* Editar producto */}
+                <Route
+                  path='/admin/productos/editar/:id'
+                  element={<ProductForm />}
+                />
               </Route>
             </Route>
           </Routes>
