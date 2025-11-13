@@ -16,7 +16,6 @@ if (!googleClientId) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {/* 4. Envuelve tu App con el proveedor y pásale el ID */}
     <GoogleOAuthProvider clientId={googleClientId}>
       <App />
     </GoogleOAuthProvider>

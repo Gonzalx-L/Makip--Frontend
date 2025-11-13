@@ -39,6 +39,24 @@ export const UserRegisterForm: React.FC = () => {
 
   return (
     <div className="w-full max-w-md mx-auto">
+      {/* Botón de retorno al inicio */}
+      <div className="mb-4">
+        <Link 
+          to="/" 
+          className="inline-flex items-center text-teal-600 hover:text-teal-700 transition-colors duration-200 group"
+        >
+          <svg 
+            className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Volver al inicio
+        </Link>
+      </div>
+
       {/* Contenedor principal con diseño mejorado */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-8 border border-gray-100">
         {/* Header con logo/icono */}
