@@ -89,7 +89,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
             <FaCheckCircle className="w-12 h-12 text-green-600" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            ¡Pago Exitoso! 🎉
+            ¡Pago Exitoso!
           </h2>
           <p className="text-gray-600 text-lg">
             Tu pedido ha sido confirmado
@@ -121,7 +121,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
 
         {/* Qué sigue */}
         <div className="px-8 pb-6">
-          <h3 className="font-semibold text-gray-900 mb-4">¿Qué sigue? 📋</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">¿Qué sigue?</h3>
           <div className="space-y-3">
             <div className="flex items-center space-x-3 text-sm">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">

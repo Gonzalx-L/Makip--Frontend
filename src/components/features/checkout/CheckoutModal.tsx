@@ -99,7 +99,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-900">
-            {step === 'shipping' ? '📦 Información de Envío' : '💳 Método de Pago'}
+            {step === 'shipping' ? 'Información de Envío' : 'Método de Pago'}
           </h2>
           <button 
             onClick={onClose}
@@ -139,13 +139,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               {/* Mensaje de demo */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <p className="text-blue-800 text-sm font-medium">
-                  🎭 <strong>MODO DEMO</strong> - Los campos están prellenados para facilitar la prueba visual
+                  <strong>MODO DEMO</strong> - Los campos están prellenados para facilitar la prueba visual
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    👤 Nombre Completo
+                    Nombre Completo
                   </label>
                   <input
                     type="text"
@@ -157,7 +157,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    📧 Email
+                    Email
                   </label>
                   <input
                     type="email"
@@ -171,7 +171,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  📱 Teléfono
+                  Teléfono
                 </label>
                 <input
                   type="tel"
@@ -184,7 +184,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  🏠 Dirección Completa
+                  Dirección Completa
                 </label>
                 <input
                   type="text"
@@ -198,7 +198,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    🏙️ Ciudad
+                    Ciudad
                   </label>
                   <input
                     type="text"
@@ -210,7 +210,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    📮 Código Postal
+                    Código Postal
                   </label>
                   <input
                     type="text"
@@ -224,7 +224,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  📍 Referencia (Opcional)
+                  Referencia (Opcional)
                 </label>
                 <textarea
                   value={shippingData.reference}
@@ -239,7 +239,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 type="submit"
                 className="w-full bg-linear-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-500 focus:ring-opacity-50"
               >
-                Continuar al Pago 💳
+                Continuar al Pago
               </button>
             </form>
           ) : (
@@ -248,7 +248,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               {/* Mensaje de demo */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                 <p className="text-green-800 text-sm font-medium">
-                  💳 <strong>PAGO DEMO</strong> - Usa cualquier información, el proceso es simulado
+                  <strong>PAGO DEMO</strong> - Usa cualquier información, el proceso es simulado
                 </p>
               </div>
               {/* Resumen del Pedido */}
@@ -274,7 +274,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    💳 Número de Tarjeta
+                    Número de Tarjeta
                   </label>
                   <div className="relative">
                     <input
@@ -292,7 +292,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      📅 Fecha de Vencimiento
+                      Fecha de Vencimiento
                     </label>
                     <input
                       type="text"
@@ -305,7 +305,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      🔒 CVV
+                      CVV
                     </label>
                     <input
                       type="text"
@@ -320,7 +320,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    👤 Nombre en la Tarjeta
+                    Nombre en la Tarjeta
                   </label>
                   <input
                     type="text"
@@ -333,8 +333,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
 
               {/* Mensaje de Seguridad */}
-              <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-                <FaLock className="text-blue-600" />
+              <div className="flex items-center justify-center space-x-2 text-sm text-teal-600 bg-blue-50 p-3 rounded-lg">
                 <span>Tu información está protegida con encriptación SSL</span>
               </div>
 
@@ -343,10 +342,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep('shipping')}
-                  className="flex-1 bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-gray-300"
+                  className="flex-1 bg-gray-200 text-teal-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-gray-300"
                   disabled={loading}
                 >
-                  ← Volver
+                  Volver
                 </button>
                 <button
                   type="submit"
@@ -359,7 +358,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       Procesando Pago...
                     </div>
                   ) : (
-                    `💰 Pagar S/ ${formatPrice(totalInCents)}`
+                    `Pagar S/ ${formatPrice(totalInCents)}`
                   )}
                 </button>
               </div>

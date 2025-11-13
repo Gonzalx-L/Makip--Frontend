@@ -13,25 +13,21 @@ export const CheckoutLoading: React.FC<CheckoutLoadingProps> = ({
     switch (step) {
       case 'processing':
         return {
-          icon: '💳',
           title: 'Procesando Pago',
           description: 'Validando información de la tarjeta...'
         };
       case 'validating':
         return {
-          icon: '🔍',
           title: 'Validando Transacción',
           description: 'Verificando con el banco...'
         };
       case 'completing':
         return {
-          icon: '✅',
           title: 'Completando Pedido',
           description: 'Generando confirmación...'
         };
       default:
         return {
-          icon: '⏳',
           title: 'Procesando',
           description: 'Por favor espera...'
         };
@@ -44,10 +40,6 @@ export const CheckoutLoading: React.FC<CheckoutLoadingProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
         <div className="text-center">
-          {/* Icono animado */}
-          <div className="text-6xl mb-4 animate-bounce">
-            {stepInfo.icon}
-          </div>
           
           {/* Spinner de carga */}
           <div className="mb-6">
@@ -77,7 +69,7 @@ export const CheckoutLoading: React.FC<CheckoutLoadingProps> = ({
           
           {/* Mensaje de seguridad */}
           <p className="text-xs text-gray-500">
-            🔒 Transacción segura - No cierres esta ventana
+            Transacción segura - No cierres esta ventana
           </p>
         </div>
       </div>

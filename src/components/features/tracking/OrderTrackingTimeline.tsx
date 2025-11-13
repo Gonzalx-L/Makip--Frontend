@@ -36,13 +36,13 @@ interface OrderTrackingTimelineProps {
 
 export const OrderTrackingTimeline: React.FC<OrderTrackingTimelineProps> = ({ trackingInfo }) => {
 
-    console.log('🚀 OrderTrackingTimeline - Rendering with trackingInfo:', trackingInfo);
+    console.log('OrderTrackingTimeline - Rendering with trackingInfo:', trackingInfo);
 
     // 5. OBTÉN EL ESTADO MÁS RECIENTE
     // (Asumimos que el último item en el array 'updates' es el estado actual)
     const currentStatus = trackingInfo.updates[trackingInfo.updates.length - 1].status;
     
-    console.log('🚀 OrderTrackingTimeline - currentStatus:', currentStatus);
+    console.log('OrderTrackingTimeline - currentStatus:', currentStatus);
 
     return (
         <div className="max-w-6xl mx-auto p-4 md:p-8">
