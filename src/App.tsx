@@ -1,4 +1,5 @@
 // src/App.tsx
+import React from "react";
 import {
   BrowserRouter,
   Routes,
@@ -7,7 +8,6 @@ import {
   Navigate,
 } from "react-router-dom";
 
-// --- Layout público ---
 import Layout from "./components/ui/layout/Layout";
 import ScrollToTop from "./components/common/ScrollToTop";
 
@@ -32,13 +32,16 @@ import LoginAdm from "./pages/Admin/LoginAdm";
 import InicioAdm from "./pages/Admin/InicioAdm";
 import ProductsPageAdmin from "./pages/Admin/ProductsPage";
 import ProductForm from "./pages/Admin/ProductForm";
+import OrdersPage from "./pages/Admin/OrdersPage";
+import OrderDetailPage from "./pages/Admin/OrderDetailPage";
+import ClientsPage from "./pages/Admin/ClientsPage";
 
 // --- Componentes de Admin ---
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
 
 // --- Wrapper de Layout Público ---
-const PublicLayoutWrapper = () => (
+const PublicLayoutWrapper: React.FC = () => (
   <Layout>
     <Outlet />
   </Layout>
@@ -79,29 +82,35 @@ function App() {
                 {/* Dashboard */}
                 <Route path='/admin/dashboard' element={<InicioAdm />} />
 
-                {/* Redirección base /admin -> /admin/dashboard */}
+                {/* Redirect /admin → /admin/dashboard */}
                 <Route
                   path='/admin'
                   element={<Navigate to='/admin/dashboard' replace />}
                 />
 
-                {/* Listado de productos Admin */}
+                {/* Productos */}
                 <Route
                   path='/admin/productos'
                   element={<ProductsPageAdmin />}
                 />
-
-                {/* Crear producto */}
                 <Route
                   path='/admin/productos/nuevo'
                   element={<ProductForm />}
                 />
-
-                {/* Editar producto */}
                 <Route
                   path='/admin/productos/editar/:id'
                   element={<ProductForm />}
                 />
+
+                {/* Órdenes */}
+                <Route path='/admin/ordenes' element={<OrdersPage />} />
+                <Route
+                  path='/admin/ordenes/:id'
+                  element={<OrderDetailPage />}
+                />
+
+                {/* Clientes */}
+                <Route path='/admin/clientes' element={<ClientsPage />} />
               </Route>
             </Route>
           </Routes>
