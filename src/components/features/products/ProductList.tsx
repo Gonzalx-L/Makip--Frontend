@@ -11,7 +11,7 @@ const mockProducts: Product[] = [
     category_id: 1,
     name: 'Muñeca Tejida', 
     description: 'Linda muñeca tejida a mano con materiales de alta calidad.',
-    base_price: 39000, // En centavos (39.00 soles)
+    base_price: 39.00, // En soles
     min_order_quantity: 1,
     base_image_url: 'https://via.placeholder.com/400x400/EC4899/FFFFFF?text=Muñeca+Tejida',
     variants: {
@@ -101,7 +101,7 @@ export const ProductList: React.FC<ProductListProps> = ({
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -109,7 +109,7 @@ export const ProductList: React.FC<ProductListProps> = ({
   if (error) {
     // Aplicar filtros también a los productos mock en caso de error
     const filteredMockProducts = mockProducts.filter((product) => {
-      const priceInSoles = product.base_price / 100;
+      const priceInSoles = product.base_price;
       const meetsPriceFilter = priceInSoles <= maxPrice;
       const meetsCategoryFilter = 
         selectedCategory === 'Todas' || 
@@ -149,8 +149,8 @@ export const ProductList: React.FC<ProductListProps> = ({
 
   // Aplicar filtros
   const filteredProducts = allProducts.filter((product) => {
-    // Filtro de precio: convertir centavos a soles para comparar
-    const priceInSoles = product.base_price / 100;
+    // Filtro de precio
+    const priceInSoles = product.base_price;
     const meetsPriceFilter = priceInSoles <= maxPrice;
     
     // Filtro de categoría

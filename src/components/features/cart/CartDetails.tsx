@@ -9,9 +9,9 @@ import { CheckoutModal, PaymentSuccessModal } from '../checkout';
 const CartItemRow: React.FC<{ item: CartItem }> = ({ item }) => {
   const { decreaseQuantity, removeFromCart, increaseQuantity } = useCartStore();
   
-  // Helper para formatear precios (centavos a soles)
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Helper para formatear precios (soles)
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
   // Usar calculated_price si existe, sino usar base_price
@@ -99,15 +99,15 @@ export const CartDetails: React.FC = () => {
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [orderId, setOrderId] = useState('');
 
-  // Helper para formatear precios (centavos a soles)
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Helper para formatear precios (soles)
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
   // Calcular totales usando la función del store
-  const subtotalInCents = getTotalPrice();
-  const envioInCents = subtotalInCents > 0 ? 1000 : 0; // Envío de S/ 10 (1000 centavos)
-  const totalInCents = subtotalInCents + envioInCents;
+  const subtotalInSoles = getTotalPrice();
+  const envioInSoles = subtotalInSoles > 0 ? 10 : 0; // Envío de S/ 10
+  const totalInSoles = subtotalInSoles + envioInSoles;
 
   const handleCheckout = () => {
     // Removida la validación - permite checkout siempre para demo visual
@@ -153,25 +153,27 @@ export const CartDetails: React.FC = () => {
           <div className="space-y-3">
             <div className="flex justify-between text-gray-700">
               <span>Subtotal</span>
-              <span className="font-medium">S/ {formatPrice(subtotalInCents)}</span>
+              <span className="font-medium">S/ {formatPrice(subtotalInSoles)}</span>
             </div>
             <div className="flex justify-between text-gray-700">
               <span>Envío</span>
-              <span className="font-medium">S/ {formatPrice(envioInCents)}</span>
+              <span className="font-medium">S/ {formatPrice(envioInSoles)}</span>
             </div>
           </div>
           <div className="border-t mt-4 pt-4">
             <div className="flex justify-between text-xl font-bold text-gray-900">
               <span>Total</span>
-              <span>S/ {formatPrice(totalInCents)}</span>
+              <span>S/ {formatPrice(totalInSoles)}</span>
             </div>
           </div>
-          <button 
-            onClick={handleCheckout}
-            className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-bold py-4 rounded-lg mt-6 transition-all duration-300 transform hover:scale-105 shadow-lg"
-          >
-            Continuar
-          </button>
+          {items.length > 0 && (
+            <button 
+              onClick={handleCheckout}
+              className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-bold py-4 rounded-lg mt-6 transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              Continuar
+            </button>
+          )}
         </div>
       </div>
       </div>

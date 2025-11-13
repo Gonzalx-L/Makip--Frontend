@@ -197,9 +197,9 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
-  // Función helper para formatear precios (convierte centavos a soles)
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Función helper para formatear precios (soles)
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
   const calculatePrice = () => {

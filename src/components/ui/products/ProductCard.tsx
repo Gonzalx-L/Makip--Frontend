@@ -51,7 +51,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         
         {/* Precio desde */}
         <p className="text-xl font-bold text-teal-900 my-2">
-          Desde S/ {((typeof product.base_price === 'number' ? product.base_price : parseFloat(product.base_price)) / 100).toFixed(2)}
+          Desde S/ {(typeof product.base_price === 'number' ? product.base_price : parseFloat(product.base_price)).toFixed(2)}
         </p>
         
         {/* Información adicional */}

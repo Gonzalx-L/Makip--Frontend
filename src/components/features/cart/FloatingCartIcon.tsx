@@ -14,9 +14,9 @@ export const FloatingCartIcon: React.FC = () => {
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
   const totalPriceInCents = getTotalPrice();
   
-  // Helper para convertir centavos a soles
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Helper para formatear precios (soles)
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
   // 3. Si no hay items o no está autenticado, no muestra nada
