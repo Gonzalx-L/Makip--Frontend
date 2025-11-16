@@ -79,7 +79,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Botón - ahora va a página de detalle */}
         <Link 
           to={`/productos/${product.product_id}`}
-          className="block w-full bg-teal-400 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-600 transition-colors duration-200 text-center"
+          className="block w-full bg-teal-400 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:bg-teal-500 transition-colors duration-200 text-center text-sm sm:text-base"
         >
           Ver Detalles
         </Link>

@@ -28,7 +28,7 @@ export const FloatingCartIcon: React.FC = () => {
   return (
     <Link
       to="/cart" // (Esta será la futura página del carrito)
-      className="fixed bottom-25 right-4 z-50 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300"
+      className="fixed bottom-25 right-4 z-50 bg-teal-600 text-white p-4 rounded-full shadow-lg hover:bg-teal-500 transition-all duration-300"
     >
       <div className="flex items-center gap-3">
         <div className="relative">
