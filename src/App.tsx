@@ -35,6 +35,7 @@ import ProductForm from "./pages/Admin/ProductForm";
 import OrdersPage from "./pages/Admin/OrdersPage";
 import OrderDetailPage from "./pages/Admin/OrderDetailPage";
 import ClientsPage from "./pages/Admin/ClientsPage";
+import ReportesPage from "./pages/Admin/ReportesPage";
 
 // --- Componentes de Admin ---
 import AdminLayout from "./components/admin/AdminLayout";
@@ -111,6 +112,8 @@ function App() {
 
                 {/* Clientes */}
                 <Route path='/admin/clientes' element={<ClientsPage />} />
+                {/* Reportes */}
+                <Route path='/admin/reportes' element={<ReportesPage />} />
               </Route>
             </Route>
           </Routes>

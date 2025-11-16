@@ -1,5 +1,3 @@
-// src/pages/Admin/ProductsPage.tsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import apiClient from "../../services/admi/apiClient";
 import {
@@ -24,48 +22,35 @@ interface Product {
   description: string;
 }
 
-// El nombre del componente puede ser cualquiera; App.tsx lo importa como default
 const ProductsPage: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
-
   const navigate = useNavigate();
 
-  //-------------------------------------------------------
-  // Cargar productos
-  //-------------------------------------------------------
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
         const response = await apiClient.get<Product[]>("/products");
         setAllProducts(response.data);
-
-        // Extraer categorías únicas
         const uniqueCategories = [
           ...new Set(response.data.map((p) => p.category_name)),
         ];
         setCategories(uniqueCategories);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
-        console.error("Error al cargar productos:", err);
         setError("Error al cargar los productos.");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
 
-  //-------------------------------------------------------
-  // Filtrado con useMemo
-  //-------------------------------------------------------
   const filteredProducts = useMemo(() => {
     return allProducts
       .filter((product) =>
@@ -78,36 +63,26 @@ const ProductsPage: React.FC = () => {
       );
   }, [allProducts, searchTerm, selectedCategory]);
 
-  //-------------------------------------------------------
-  // Editar
-  //-------------------------------------------------------
   const handleEdit = (product: Product) => {
     navigate(`/admin/productos/editar/${product.product_id}`, {
       state: { product },
     });
   };
 
-  //-------------------------------------------------------
-  // Eliminar / desactivar
-  //-------------------------------------------------------
   const handleDelete = async (id: number) => {
     const confirmDelete = window.confirm(
       "¿Estás seguro de que quieres desactivar este producto? (Esto lo ocultará de la tienda)"
     );
     if (!confirmDelete) return;
-
     try {
-      // Backend: DELETE (que probablemente hace un UPDATE is_active = false)
       await apiClient.delete(`/products/${id}`);
-
-      // Actualiza el estado local
       setAllProducts((prevProducts) =>
         prevProducts.map((p) =>
           p.product_id === id ? { ...p, is_active: false } : p
         )
       );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      console.error("Error al desactivar producto:", err);
       setError("Error al desactivar el producto.");
     }
   };
@@ -116,9 +91,6 @@ const ProductsPage: React.FC = () => {
     navigate("/admin/productos/nuevo");
   };
 
-  //-------------------------------------------------------
-  // Loading / Error
-  //-------------------------------------------------------
   if (isLoading) {
     return (
       <div className='p-10 flex justify-center'>
@@ -136,9 +108,6 @@ const ProductsPage: React.FC = () => {
     );
   }
 
-  //-------------------------------------------------------
-  // UI
-  //-------------------------------------------------------
   return (
     <div className='p-6 md:p-8 lg:p-10'>
       {/* Header */}
@@ -156,7 +125,6 @@ const ProductsPage: React.FC = () => {
 
       {/* Filtros */}
       <div className='mb-4 grid grid-cols-1 md:grid-cols-2 gap-4'>
-        {/* Filtro por Nombre */}
         <div className='relative'>
           <label htmlFor='search-product' className='sr-only'>
             Buscar producto
@@ -171,8 +139,6 @@ const ProductsPage: React.FC = () => {
           />
           <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
         </div>
-
-        {/* Filtro por Categoría */}
         <div>
           <label htmlFor='search-category' className='sr-only'>
             Filtrar por categoría
@@ -191,7 +157,6 @@ const ProductsPage: React.FC = () => {
           </select>
         </div>
       </div>
-
       {/* Tabla */}
       <div className='rounded-lg border border-gray-200 bg-white shadow-sm'>
         <div className='overflow-x-auto'>
