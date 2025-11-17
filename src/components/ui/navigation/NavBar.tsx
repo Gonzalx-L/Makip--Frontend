@@ -110,7 +110,7 @@ export const NavBar = () => {
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">
+              <Link to="/login" className="bg-white text-teal-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">
                 Iniciar sesión
               </Link>
             )}

@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCartStore } from '../../../store/cartStore';
 import type { CartItem } from '../../../types';
 import { Link } from 'react-router-dom';
 import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
+import { CheckoutModal, PaymentSuccessModal } from '../checkout';
 
 // Componente "hijo" para una sola fila del carrito
 const CartItemRow: React.FC<{ item: CartItem }> = ({ item }) => {
   const { decreaseQuantity, removeFromCart, increaseQuantity } = useCartStore();
   
-  // Helper para formatear precios (centavos a soles)
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Helper para formatear precios (soles)
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
   // Usar calculated_price si existe, sino usar base_price
@@ -94,19 +95,34 @@ const CartItemRow: React.FC<{ item: CartItem }> = ({ item }) => {
 // Componente "Padre" principal
 export const CartDetails: React.FC = () => {
   const { items, clearCart, getTotalPrice } = useCartStore();
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [orderId, setOrderId] = useState('');
 
-  // Helper para formatear precios (centavos a soles)
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Helper para formatear precios (soles)
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
   // Calcular totales usando la función del store
-  const subtotalInCents = getTotalPrice();
-  const envioInCents = subtotalInCents > 0 ? 1000 : 0; // Envío de S/ 10 (1000 centavos)
-  const totalInCents = subtotalInCents + envioInCents;
+  const subtotalInSoles = getTotalPrice();
+  const envioInSoles = subtotalInSoles > 0 ? 10 : 0; // Envío de S/ 10
+  const totalInSoles = subtotalInSoles + envioInSoles;
+
+  const handleCheckout = () => {
+    // Removida la validación - permite checkout siempre para demo visual
+    setIsCheckoutOpen(true);
+  };
+
+  const handlePaymentSuccess = (newOrderId: string) => {
+    setOrderId(newOrderId);
+    setIsCheckoutOpen(false);
+    setIsSuccessOpen(true);
+  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       
       {/* Columna Izquierda: Lista de Items */}
       <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
@@ -120,7 +136,7 @@ export const CartDetails: React.FC = () => {
         </div>
         
         {items.length === 0 ? (
-          <p className="text-gray-500">Tu carrito está vacío. <Link to="/productos" className="text-blue-600">¡Ve a comprar!</Link></p>
+          <p className="text-gray-500">Tu carrito está vacío. <Link to="/productos" className="text-teal-500">¡Ve a comprar!</Link></p>
         ) : (
           <div>
             {items.map(item => (
@@ -137,24 +153,43 @@ export const CartDetails: React.FC = () => {
           <div className="space-y-3">
             <div className="flex justify-between text-gray-700">
               <span>Subtotal</span>
-              <span className="font-medium">S/ {formatPrice(subtotalInCents)}</span>
+              <span className="font-medium">S/ {formatPrice(subtotalInSoles)}</span>
             </div>
             <div className="flex justify-between text-gray-700">
               <span>Envío</span>
-              <span className="font-medium">S/ {formatPrice(envioInCents)}</span>
+              <span className="font-medium">S/ {formatPrice(envioInSoles)}</span>
             </div>
           </div>
           <div className="border-t mt-4 pt-4">
             <div className="flex justify-between text-xl font-bold text-gray-900">
               <span>Total</span>
-              <span>S/ {formatPrice(totalInCents)}</span>
+              <span>S/ {formatPrice(totalInSoles)}</span>
             </div>
           </div>
-          <button className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg mt-6 hover:bg-blue-700 transition-colors">
-            Continuar con la Compra
-          </button>
+          {items.length > 0 && (
+            <button 
+              onClick={handleCheckout}
+              className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-bold py-4 rounded-lg mt-6 transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              Continuar
+            </button>
+          )}
         </div>
       </div>
-    </div>
+      </div>
+      
+      {/* Modales */}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+      
+      <PaymentSuccessModal
+        isOpen={isSuccessOpen}
+        orderId={orderId}
+        onClose={() => setIsSuccessOpen(false)}
+      />
+    </>
   );
 };

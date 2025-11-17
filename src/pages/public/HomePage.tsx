@@ -74,7 +74,7 @@ const HomePage: React.FC = () => {
               <div className="p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">CINTAS PERSONALIZADAS</h3>
                 <p className="text-gray-600 mb-4 line-clamp-2">
-                  Cinta personalizada con el diseño que desees.
+                  Cinta sublimada personalizada con el diseño que desees.
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-teal-500">S/15.00</span>
@@ -289,15 +289,6 @@ const HomePage: React.FC = () => {
 
             {/* Botones CTA */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Link 
-                to="/registro" 
-                className="group relative inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-teal-400 to-cyan-500 text-gray-900 font-bold text-lg rounded-2xl hover:from-teal-300 hover:to-cyan-400 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl min-w-[200px]"
-              >
-                <span className="relative z-10">Crear cuenta</span>
-                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 rounded-2xl transition-opacity duration-300"></div>
-                <i className="fas fa-rocket ml-2 text-gray-900"></i>
-              </Link>
-              
               <Link 
                 to="/login" 
                 className="group inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-bold text-lg rounded-2xl hover:bg-white hover:text-teal-900 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl min-w-[200px]"

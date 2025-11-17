@@ -5,8 +5,8 @@ import { FaTruck, FaWarehouse, FaClipboardCheck, FaCircleCheck } from 'react-ico
 // 1. IMPORTA EL NUEVO COMPONENTE DE PASOS
 import { TrackingStepIndicator } from '../../ui/tracking/TrackingStepIndicator';
 
-// 2. IMPORTA UNA IMAGEN DE EJEMPLO (¡Ajusta esta ruta!)
-import productoEjemplo from '../../../assets/02.png'; // O la imagen que quieras
+// 2. COMENTAMOS LA IMAGEN POR AHORA PARA DEBUGGING
+// import productoEjemplo from '../../../assets/02.png';
 
 
 // 3. --- DATOS DE EJEMPLO (ACTUALIZADOS) ---
@@ -22,9 +22,9 @@ const mockTrackingData: TrackingInfo = {
         { status: "Centro de Reparto", description: "Paquete en el centro de reparto", date: "26 OCT, 14:00 (GMT-5)", isComplete: true },
         { status: "En Camino", description: "Paquete en ruta a tu dirección", date: "26 OCT, 14:30 (GMT-5)", isComplete: false },
     ],
-    // 4. AÑADE LOS DATOS DEL PRODUCTO
+    // 4. AÑADE LOS DATOS DEL PRODUCTO (SIN IMAGEN POR AHORA)
     productName: 'POLERA PERSONALIZADA',
-    productImage: productoEjemplo,
+    productImage: undefined, // productoEjemplo - comentado para debugging
 };
 // --- FIN DE DATOS DE EJEMPLO ---
 
@@ -36,9 +36,13 @@ interface OrderTrackingTimelineProps {
 
 export const OrderTrackingTimeline: React.FC<OrderTrackingTimelineProps> = ({ trackingInfo }) => {
 
+    console.log('OrderTrackingTimeline - Rendering with trackingInfo:', trackingInfo);
+
     // 5. OBTÉN EL ESTADO MÁS RECIENTE
     // (Asumimos que el último item en el array 'updates' es el estado actual)
     const currentStatus = trackingInfo.updates[trackingInfo.updates.length - 1].status;
+    
+    console.log('OrderTrackingTimeline - currentStatus:', currentStatus);
 
     return (
         <div className="max-w-6xl mx-auto p-4 md:p-8">
@@ -88,23 +92,28 @@ export const OrderTrackingTimeline: React.FC<OrderTrackingTimelineProps> = ({ tr
                     </div>
                 </div>
                 {/* Fila Inferior: Imagen del Producto (Centrada y más grande) */}
-                <div className="w-full max-w-lg mx-auto">
-                    {trackingInfo.productImage && (
-                        <div>
-                            {/* --- 1. ESTE ES EL MARCO --- */}
-                            {/* Le damos la altura (h-60) y el overflow-hidden */}
-                            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden h-130">
+                <div className="w-full max-w-lg mx-auto mt-8">
+                    <div>
+                        {/* --- 1. ESTE ES EL MARCO --- */}
+                        {/* Le damos la altura (h-60) y el overflow-hidden */}
+                        <div className="rounded-lg border border-gray-200 bg-gray-100 overflow-hidden h-60 flex items-center justify-center">
+                            {trackingInfo.productImage ? (
                                 <img
                                     src={trackingInfo.productImage}
                                     alt={trackingInfo.productName}
                                     className="w-full h-full object-cover"
                                 />
-                            </div>
-                            <p className="text-center font-semibold text-gray-700 mt-4">
-                                {trackingInfo.productName}
-                            </p>
+                            ) : (
+                                <div className="text-center">
+                                    <div className="text-6xl text-gray-400 mb-2">📦</div>
+                                    <p className="text-gray-500 text-sm">Producto</p>
+                                </div>
+                            )}
                         </div>
-                    )}
+                        <p className="text-center font-semibold text-gray-700 mt-4">
+                            {trackingInfo.productName}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
