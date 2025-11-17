@@ -4,6 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { productService } from '../../services/productService';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthContext } from '../../contexts/AuthContext';
+import ImageUpload from '../../components/shared/ImageUpload';
 import type { ProductVariants, PersonalizationData, Product } from '../../types';
 
 // Datos mock para cuando no hay productos en la BD
@@ -218,6 +219,22 @@ const ProductDetailPage: React.FC = () => {
     return totalPrice;
   };
 
+  // Función para calcular precio por unidad (para el carrito)
+  const calculateUnitPrice = () => {
+    const basePrice = typeof product.base_price === 'number' ? product.base_price : parseFloat(product.base_price);
+    let unitPrice = basePrice;
+    
+    // Agregar costo de personalización si existe
+    if (product.personalization_metadata?.cost && Object.keys(personalization).length > 0) {
+      const personalizationCost = typeof product.personalization_metadata.cost === 'number' 
+        ? product.personalization_metadata.cost 
+        : parseFloat(product.personalization_metadata.cost);
+      unitPrice += personalizationCost;
+    }
+    
+    return unitPrice;
+  };
+
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
     
@@ -280,7 +297,7 @@ const ProductDetailPage: React.FC = () => {
       quantity,
       selectedVariants,
       personalization,
-      calculated_price: calculatePrice()
+      calculated_price: calculateUnitPrice()
     };
 
     addToCart(cartItem);
@@ -393,6 +410,20 @@ const ProductDetailPage: React.FC = () => {
                   </p>
                 )}
               </div>
+
+              {/* Imagen personalizada */}
+              {product.personalization_metadata.allows_image && (
+                <div className="mb-4">
+                  <ImageUpload
+                    onImageUpload={(imageUrl) => handlePersonalizationChange('image_url', imageUrl)}
+                    onImageRemove={() => handlePersonalizationChange('image_url', '')}
+                    currentImageUrl={personalization.image_url || ''}
+                    label="Imagen personalizada"
+                    helpText="Sube tu logo o imagen para personalizar el producto (JPG, PNG, GIF - Máx. 5MB)"
+                    required={false}
+                  />
+                </div>
+              )}
             </div>
           )}
 

@@ -38,13 +38,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   });
 
   // Helper para formatear precios
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
-  const subtotalInCents = getTotalPrice() || 8500; // Demo: S/ 85.00 si no hay productos
-  const envioInCents = 1000; // Demo: S/ 10.00 siempre
-  const totalInCents = subtotalInCents + envioInCents;
+  const subtotalInSoles = getTotalPrice() || 85; // Demo: S/ 85.00 si no hay productos
+  const envioInSoles = 10; // Demo: S/ 10.00 siempre
+  const totalInSoles = subtotalInSoles + envioInSoles;
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,28 +59,26 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     try {
       // Paso 1: Procesando pago
       setLoadingStep('processing');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Paso 2: Validando transacción
+      // Paso 2: Validando transacción (simulado)
       setLoadingStep('validating');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Paso 3: Completando pedido
+      // Paso 3: Completando pedido (simulado)
       setLoadingStep('completing');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Generar ID de pedido simulado
       const orderId = `MKP${Date.now().toString().slice(-6)}`;
       
-      // NO limpiar carrito en modo demo para poder probar múltiples veces
-      // clearCart();
-      
-      // Notificar éxito
+      // Limpiar carrito y notificar éxito
+      clearCart();
       onPaymentSuccess(orderId);
       
     } catch (error) {
       console.error('Error en el pago:', error);
-      alert('Error al procesar el pago. Inténtalo de nuevo.');
+      alert(`Error al procesar el pago: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -257,15 +255,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal ({items.length || 3} productos)</span>
-                    <span>S/ {formatPrice(subtotalInCents)}</span>
+                    <span>S/ {formatPrice(subtotalInSoles)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Envío</span>
-                    <span>S/ {formatPrice(envioInCents)}</span>
+                    <span>S/ {formatPrice(envioInSoles)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg pt-2 border-t">
                     <span>Total</span>
-                    <span>S/ {formatPrice(totalInCents)}</span>
+                    <span>S/ {formatPrice(totalInSoles)}</span>
                   </div>
                 </div>
               </div>
@@ -358,7 +356,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       Procesando Pago...
                     </div>
                   ) : (
-                    `Pagar S/ ${formatPrice(totalInCents)}`
+                    `Pagar S/ ${formatPrice(totalInSoles)}`
                   )}
                 </button>
               </div>
