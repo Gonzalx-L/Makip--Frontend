@@ -158,7 +158,7 @@ const LoginAdm: React.FC = () => {
             className='mb-6 w-full max-w-[320px] h-auto'
           />
           <h2 className='mb-2 text-[20px] font-semibold text-[#1A1A1A]'>
-            Bienvenido a Makip
+            Bienvenido a Makip Te Crea
           </h2>
           <p className='text-[14px] text-[#4A5568]'>
             Tu equipo colaborativo para crear proyectos increíbles
@@ -168,7 +168,7 @@ const LoginAdm: React.FC = () => {
         {/* Columna Derecha - Formulario de Login */}
         <div className='flex flex-col justify-center p-12 md:p-16'>
           <div className='mb-8 text-center'>
-            <h1 className='mb-3 text-[32px] font-semibold text-[#1A1A1A]'>
+            <h1 className='mb-3 text-[32px] font-semibold text-[#068e85]'>
               Iniciar sesión
             </h1>
             <p className='text-[15px] text-[#4A5568]'>
@@ -200,7 +200,7 @@ const LoginAdm: React.FC = () => {
                     }));
                 }}
                 onBlur={handleEmailBlur}
-                className={`w-full rounded-xl border px-4 py-3 text-[16px] placeholder-[#9CA3AF] outline-none transition-all duration-150 focus:border-[#1E63FF] focus:ring-1 focus:ring-[#1E63FF]/20 
+                className={`w-full rounded-xl border px-4 py-3 text-[16px] placeholder-[#9CA3AF] outline-none transition-all duration-150 focus:border-[#0ef5ee] focus:ring-1 focus:ring-[#1E63FF]/20 
                   ${
                     touched.email && errors.email
                       ? "border-red-500"
@@ -235,7 +235,7 @@ const LoginAdm: React.FC = () => {
                       }));
                   }}
                   onBlur={handlePasswordBlur}
-                  className={`w-full rounded-xl border px-4 py-3 text-[16px] placeholder-[#9CA3AF] outline-none transition-all duration-150 focus:border-[#1E63FF] focus:ring-1 focus:ring-[#1E63FF]/20 
+                  className={`w-full rounded-xl border px-4 py-3 text-[16px] placeholder-[#9CA3AF] outline-none transition-all duration-150 focus:border-[#0ef5ee] focus:ring-1 focus:ring-[#1E63FF]/20 
                     ${
                       touched.password && errors.password
                         ? "border-red-500"
@@ -299,7 +299,7 @@ const LoginAdm: React.FC = () => {
             <button
               type='submit'
               disabled={isLoading || isSuccess}
-              className='mt-6 flex w-full items-center justify-center rounded-xl bg-[#1E63FF] px-4 py-3 text-[16px] font-medium text-white shadow-lg shadow-[#1E63FF]/20 transition-all duration-150 hover:-translate-y-0.5 hover:bg-[#1557E6] hover:shadow-xl hover:shadow-[#1E63FF]/30 disabled:opacity-50 disabled:cursor-not-allowed'>
+              className='mt-6 flex w-full items-center justify-center rounded-xl bg-[#0ed2c8] px-4 py-3 text-[16px] font-medium text-white shadow-lg shadow-[#0ac1b8]/20 transition-all duration-150 hover:-translate-y-0.5 hover:bg-[#0ac1b8] hover:shadow-xl hover:shadow-[#0ac1b8]/30 disabled:opacity-50 disabled:cursor-not-allowed'>
               {isLoading ? (
                 <Loader2 className='mr-2 h-5 w-5 animate-spin' />
               ) : (
