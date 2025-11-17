@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCartStore } from '../../../store/cartStore';
-import { FaCreditCard, FaLock, FaTimes, FaSpinner } from 'react-icons/fa';
+import { FaTimes, FaUpload } from 'react-icons/fa';
 import { CheckoutLoading } from './CheckoutLoading';
 
 interface CheckoutModalProps {
@@ -14,10 +14,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onClose, 
   onPaymentSuccess 
 }) => {
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<'processing' | 'validating' | 'completing'>('processing');
-  const [step, setStep] = useState<'shipping' | 'payment'>('shipping');
+  const [step, setStep] = useState<'shipping' | 'image'>('shipping');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   // Estados del formulario - Prellenados para demo visual
   const [shippingData, setShippingData] = useState({
@@ -30,59 +32,59 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     reference: 'Casa azul, segundo piso'
   });
 
-  const [paymentData, setPaymentData] = useState({
-    cardNumber: '4532 1234 5678 9012',
-    expiryDate: '12/28',
-    cvv: '123',
-    cardName: 'JUAN PEREZ'
-  });
-
-  // Helper para formatear precios
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Helper para formatear precios (los precios ya están en soles, no centavos)
+  const formatPrice = (price: number) => {
+    return price.toFixed(2);
   };
 
-  const subtotalInCents = getTotalPrice() || 8500; // Demo: S/ 85.00 si no hay productos
-  const envioInCents = 1000; // Demo: S/ 10.00 siempre
-  const totalInCents = subtotalInCents + envioInCents;
+  const subtotal = getTotalPrice() || 0; // Precio real del carrito
+  const envio = subtotal > 0 ? 10.00 : 0; // S/ 10.00 de envío solo si hay productos
+  const total = subtotal + envio;
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Ir directo al paso de pago sin validación para demo
-    setStep('payment');
+    // Ir directamente al paso de pago QR
+    setStep('image');
   };
 
-  const handlePaymentSubmit = async (e: React.FormEvent) => {
+  const handleImageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    if (!selectedImage) {
+      alert('Por favor, sube el comprobante de pago');
+      return;
+    }
 
+    // Procesar el pago QR (simulado)
+    setLoading(true);
     try {
-      // Paso 1: Procesando pago
-      setLoadingStep('processing');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Paso 2: Validando transacción
       setLoadingStep('validating');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setLoadingStep('completing');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Paso 3: Completando pedido
-      setLoadingStep('completing');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Generar ID de pedido simulado
+      // Generar ID de pedido
       const orderId = `MKP${Date.now().toString().slice(-6)}`;
-      
-      // NO limpiar carrito en modo demo para poder probar múltiples veces
-      // clearCart();
-      
-      // Notificar éxito
       onPaymentSuccess(orderId);
       
     } catch (error) {
-      console.error('Error en el pago:', error);
-      alert('Error al procesar el pago. Inténtalo de nuevo.');
+      console.error('Error validating payment:', error);
+      alert('Error al validar el comprobante. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -99,7 +101,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-900">
-            {step === 'shipping' ? 'Información de Envío' : 'Método de Pago'}
+            {step === 'shipping' ? 'Información de Envío' : 'Pago con QR - Yape/Plin'}
           </h2>
           <button 
             onClick={onClose}
@@ -118,16 +120,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               }`}>
                 1
               </div>
-              <span className="ml-2 font-medium">Envío</span>
+              <span className="ml-2 font-medium">Información de Envío</span>
             </div>
             <div className="w-16 h-0.5 bg-gray-200"></div>
-            <div className={`flex items-center ${step === 'payment' ? 'text-teal-600' : 'text-gray-400'}`}>
+            <div className={`flex items-center ${step === 'image' ? 'text-teal-600' : 'text-gray-400'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step === 'payment' ? 'bg-teal-600 text-white' : 'bg-gray-200'
+                step === 'image' ? 'bg-teal-600 text-white' : 'bg-gray-200'
               }`}>
                 2
               </div>
-              <span className="ml-2 font-medium">Pago</span>
+              <span className="ml-2 font-medium">Pago con Yape/Plin</span>
             </div>
           </div>
         </div>
@@ -135,13 +137,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <div className="p-6">
           {step === 'shipping' ? (
             /* Formulario de Envío - DEMO VERSION */
-            <form onSubmit={handleShippingSubmit} className="space-y-4">
-              {/* Mensaje de demo */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <p className="text-blue-800 text-sm font-medium">
-                  <strong>MODO DEMO</strong> - Los campos están prellenados para facilitar la prueba visual
-                </p>
-              </div>
+            <form onSubmit={handleShippingSubmit} className="space-y-4"> 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -242,127 +238,162 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 Continuar al Pago
               </button>
             </form>
-          ) : (
-            /* Formulario de Pago - DEMO VERSION */
-            <form onSubmit={handlePaymentSubmit} className="space-y-6">
-              {/* Mensaje de demo */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                <p className="text-green-800 text-sm font-medium">
-                  <strong>PAGO DEMO</strong> - Usa cualquier información, el proceso es simulado
-                </p>
-              </div>
+          ) : step === 'image' ? (
+            /* Método de Pago con QR - Yape/Plin */
+            <form onSubmit={handleImageSubmit} className="space-y-6">
               {/* Resumen del Pedido */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-3">Resumen del Pedido</h3>
+              <div className="bg-linear-to-r from-teal-50 to-teal-100 p-4 rounded-lg border border-teal-200">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                  Pago con Yape/Plin
+                  <span className="ml-2 text-sm bg-teal-200 text-teal-800 px-2 py-1 rounded-full">Método preferido</span>
+                </h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Subtotal ({items.length || 3} productos)</span>
-                    <span>S/ {formatPrice(subtotalInCents)}</span>
-                  </div>
+                  {items.length > 0 ? (
+                    <>
+                      {items.map((item) => (
+                        <div key={item.product.product_id} className="flex justify-between">
+                          <span>{item.product.name} x{item.quantity}</span>
+                          <span>S/ {formatPrice(item.calculated_price * item.quantity)}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between border-t border-purple-200 pt-2">
+                        <span>Subtotal</span>
+                        <span>S/ {formatPrice(subtotal)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between">
+                      <span>No hay productos en el carrito</span>
+                      <span>S/ 0.00</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Envío</span>
-                    <span>S/ {formatPrice(envioInCents)}</span>
+                    <span>S/ {formatPrice(envio)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                    <span>Total</span>
-                    <span>S/ {formatPrice(totalInCents)}</span>
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t border-teal-200">
+                    <span>Total a Pagar</span>
+                    <span className="text-teal-700">S/ {formatPrice(total)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Información de la Tarjeta */}
+              {/* Instrucciones de Pago */}
+              <div className="bg-teal-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-start space-x-3">
+                  <div>
+                    <h4 className="font-semibold text-teal-800 mb-2">Instrucciones para el pago:</h4>
+                    <ol className="text-sm text-teal-700 space-y-1">
+                      <li>1. Escanea el código QR con tu app Yape o Plin</li>
+                      <li>2. Transfiere exactamente <strong>S/ {formatPrice(total)}</strong></li>
+                      <li>3. Toma captura del comprobante de pago</li>
+                      <li>4. Sube la imagen del comprobante abajo</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+
+              {/* Código QR de Pago */}
+              <div className="flex justify-center">
+                <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-gray-200">
+                  <div className="text-center mb-4">
+                    <h4 className="font-bold text-gray-800 mb-2">Escanea para pagar</h4>
+                    <p className="text-sm text-gray-600">S/ {formatPrice(total)}</p>
+                  </div>
+                  
+                  {/* Placeholder para QR - En producción aquí iría el QR real */}
+                  <div className="w-48 h-48 bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center rounded-lg">
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">📱</div>
+                      <p className="text-xs text-gray-500">Código QR</p>
+                      <p className="text-xs text-gray-500">Yape/Plin</p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center mt-4">
+                    <p className="text-xs text-gray-500">Makip Store</p>
+                    <p className="text-xs font-mono text-gray-400">923 119 167</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Subir Comprobante de Pago */}
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Número de Tarjeta
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={paymentData.cardNumber}
-                      onChange={(e) => setPaymentData({...paymentData, cardNumber: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none pl-12"
-                      placeholder="1234 5678 9012 3456"
-                      maxLength={19}
-                    />
-                    <FaCreditCard className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  </div>
+                <h4 className="font-semibold text-gray-800">Subir Comprobante de Pago</h4>
+                
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-teal-500 transition-colors">
+                  {imagePreview ? (
+                    <div className="space-y-4">
+                      <img 
+                        src={imagePreview} 
+                        alt="Comprobante de pago" 
+                        className="mx-auto max-w-full max-h-48 rounded-lg shadow-lg"
+                      />
+                      <p className="text-sm text-gray-600">
+                        {selectedImage?.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setImagePreview(null);
+                        }}
+                        className="text-teal-600 hover:text-teal-700 text-sm font-medium"
+                      >
+                        Cambiar comprobante
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <FaUpload className="mx-auto text-4xl text-gray-400" />
+                      <div>
+                        <p className="text-lg font-medium text-gray-700 mb-2">
+                          Arrastra tu comprobante aquí
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Captura de pantalla del pago exitoso
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Fecha de Vencimiento
-                    </label>
+                {/* Botón de subir comprobante */}
+                <div className="flex justify-center">
+                  <label className="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center space-x-2">
+                    <FaUpload className="w-4 h-4" />
+                    <span>{imagePreview ? 'Cambiar comprobante' : 'Subir comprobante'}</span>
                     <input
-                      type="text"
-                      value={paymentData.expiryDate}
-                      onChange={(e) => setPaymentData({...paymentData, expiryDate: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none"
-                      placeholder="MM/YY"
-                      maxLength={5}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      CVV
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentData.cvv}
-                      onChange={(e) => setPaymentData({...paymentData, cvv: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none"
-                      placeholder="123"
-                      maxLength={4}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nombre en la Tarjeta
                   </label>
-                  <input
-                    type="text"
-                    value={paymentData.cardName}
-                    onChange={(e) => setPaymentData({...paymentData, cardName: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none"
-                    placeholder="JUAN PÉREZ"
-                  />
                 </div>
               </div>
 
-              {/* Mensaje de Seguridad */}
-              <div className="flex items-center justify-center space-x-2 text-sm text-teal-600 bg-blue-50 p-3 rounded-lg">
-                <span>Tu información está protegida con encriptación SSL</span>
-              </div>
-
-              {/* Botones */}
+              {/* Botones de navegación */}
               <div className="flex space-x-4">
                 <button
                   type="button"
                   onClick={() => setStep('shipping')}
-                  className="flex-1 bg-gray-200 text-teal-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-gray-300"
-                  disabled={loading}
+                  className="flex-1 bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-gray-300"
                 >
-                  Volver
+                  ← Volver
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-linear-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  disabled={!selectedImage}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <FaSpinner className="animate-spin mr-2" />
-                      Procesando Pago...
-                    </div>
-                  ) : (
-                    `Pagar S/ ${formatPrice(totalInCents)}`
-                  )}
+                  {selectedImage ? 'Confirmar Pago' : 'Sube tu comprobante'}
                 </button>
               </div>
             </form>
+          ) : (
+            /* Este else nunca se ejecutará ya que solo tenemos 2 pasos ahora */
+            <div></div>
           )}
         </div>
       </div>
