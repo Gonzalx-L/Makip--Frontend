@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCartStore } from '../../../store/cartStore';
 import { FaTimes, FaUpload } from 'react-icons/fa';
 import { CheckoutLoading } from './CheckoutLoading';
+import QRImage from '../../../assets/QR.png';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -301,17 +302,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <p className="text-sm text-gray-600">S/ {formatPrice(total)}</p>
                   </div>
                   
-                  {/* Placeholder para QR - En producción aquí iría el QR real */}
-                  <div className="w-48 h-48 bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center rounded-lg">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">📱</div>
-                      <p className="text-xs text-gray-500">Código QR</p>
-                      <p className="text-xs text-gray-500">Yape/Plin</p>
-                    </div>
+                  {/* Código QR protegido - Imagen más grande y notoria */}
+                  <div className="flex items-center justify-center">
+                    <img 
+                      src={QRImage} 
+                      alt="Código QR de Pago" 
+                      className="w-70 h-70 mx-auto object-cover select-none pointer-events-none rounded-lg shadow-lg" 
+                      draggable={false}
+                      onContextMenu={(e) => e.preventDefault()}
+                      onDragStart={(e) => e.preventDefault()}
+                      style={{ 
+                        userSelect: 'none', 
+                        WebkitUserSelect: 'none',
+                        WebkitTouchCallout: 'none'
+                      } as React.CSSProperties}
+                    />
                   </div>
                   
                   <div className="text-center mt-4">
-                    <p className="text-xs text-gray-500">Makip Store</p>
+                    <p className="text-xs text-gray-500">Gloria E. Inquillay C.</p>
                     <p className="text-xs font-mono text-gray-400">923 119 167</p>
                   </div>
                 </div>
