@@ -22,15 +22,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
-  // Estados del formulario - Prellenados para demo visual
+  // Estados del formulario - Vacíos para que el usuario los rellene
   const [shippingData, setShippingData] = useState({
-    fullName: 'Juan Pérez Demo',
-    email: 'juan@demo.com',
-    phone: '+51 999 123 456',
-    address: 'Av. Principal 123, Miraflores',
-    city: 'Lima',
-    postalCode: '15074',
-    reference: 'Casa azul, segundo piso'
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    reference: ''
   });
 
   // Helper para formatear precios (los precios ya están en soles, no centavos)
@@ -44,7 +44,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Ir directamente al paso de pago QR
+    
+    // Validar que todos los campos requeridos estén completos
+    const requiredFields = ['fullName', 'email', 'phone', 'address', 'city'];
+    const missingFields = requiredFields.filter(field => !shippingData[field as keyof typeof shippingData]);
+    
+    if (missingFields.length > 0) {
+      alert('Por favor, completa todos los campos obligatorios');
+      return;
+    }
+    
+    // Ir al paso de pago QR
     setStep('image');
   };
 
@@ -56,7 +66,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
-    // Procesar el pago QR (simulado)
+    // Procesar el pago QR con los datos del cliente
     setLoading(true);
     try {
       setLoadingStep('validating');
@@ -67,6 +77,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       
       // Generar ID de pedido
       const orderId = `MKP${Date.now().toString().slice(-6)}`;
+      
+      // Aquí se podrían enviar los datos del cliente al backend
+      console.log('Datos del pedido:', {
+        orderId,
+        customer: shippingData,
+        items,
+        total,
+        paymentMethod: 'QR',
+        paymentProof: selectedImage.name
+      });
+      
       onPaymentSuccess(orderId);
       
     } catch (error) {
@@ -150,6 +171,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     onChange={(e) => setShippingData({...shippingData, fullName: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none"
                     placeholder="Tu nombre completo"
+                    required
                   />
                 </div>
                 <div>
@@ -162,6 +184,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     onChange={(e) => setShippingData({...shippingData, email: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none"
                     placeholder="tu@email.com"
+                    required
                   />
                 </div>
               </div>
@@ -176,6 +199,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   onChange={(e) => setShippingData({...shippingData, phone: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none"
                   placeholder="+51 999 999 999"
+                  required
                 />
               </div>
 
@@ -189,6 +213,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   onChange={(e) => setShippingData({...shippingData, address: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none"
                   placeholder="Av. Principal 123, Distrito"
+                  required
                 />
               </div>
 
@@ -203,6 +228,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     onChange={(e) => setShippingData({...shippingData, city: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 outline-none"
                     placeholder="Lima"
+                    required
                   />
                 </div>
                 <div>
@@ -242,6 +268,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           ) : step === 'image' ? (
             /* Método de Pago con QR - Yape/Plin */
             <form onSubmit={handleImageSubmit} className="space-y-6">
+              {/* Información del Cliente */}
+              <div className="bg-linear-to-r from-teal-50 to-teal-100 p-4 rounded-lg border border-teal-200 mb-4">
+                <h4 className="font-semibold text-teal-800 mb-3">Datos del Cliente</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-teal-700">
+                  <div><strong>Nombre:</strong> {shippingData.fullName}</div>
+                  <div><strong>Email:</strong> {shippingData.email}</div>
+                  <div><strong>Teléfono:</strong> {shippingData.phone}</div>
+                  <div><strong>Ciudad:</strong> {shippingData.city}</div>
+                  <div className="md:col-span-2"><strong>Dirección:</strong> {shippingData.address}</div>
+                  {shippingData.postalCode && (
+                    <div><strong>Código Postal:</strong> {shippingData.postalCode}</div>
+                  )}
+                  {shippingData.reference && (
+                    <div className="md:col-span-2"><strong>Referencia:</strong> {shippingData.reference}</div>
+                  )}
+                </div>
+              </div>
+
               {/* Resumen del Pedido */}
               <div className="bg-linear-to-r from-teal-50 to-teal-100 p-4 rounded-lg border border-teal-200">
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
