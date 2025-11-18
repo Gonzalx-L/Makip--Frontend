@@ -68,7 +68,7 @@ export const HybridAuthForm: React.FC<HybridAuthFormProps> = ({
         return (
           <div className="max-w-md mx-auto space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              <h2 className="text-2xl font-bold text-teal-700 mb-2">
                 Bienvenido
               </h2>
               <p className="text-gray-600">
@@ -78,7 +78,7 @@ export const HybridAuthForm: React.FC<HybridAuthFormProps> = ({
 
             {/* Google OAuth */}
             <div className="space-y-3">
-              <div className="text-center text-sm font-medium text-gray-700">
+              <div className="text-center text-sm font-medium text-teal-700">
                 Opción recomendada
               </div>
               <GoogleLoginButton
@@ -121,7 +121,7 @@ export const HybridAuthForm: React.FC<HybridAuthFormProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setCurrentView('traditional-login')}
-                className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-teal-100 transition-colors"
               >
                 <FaUser className="mr-2" />
                 Iniciar Sesión
@@ -129,7 +129,7 @@ export const HybridAuthForm: React.FC<HybridAuthFormProps> = ({
 
               <button
                 onClick={() => setCurrentView('traditional-register')}
-                className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-teal-100 transition-colors"
               >
                 <FaUserPlus className="mr-2" />
                 Registrarse
@@ -158,7 +158,7 @@ export const HybridAuthForm: React.FC<HybridAuthFormProps> = ({
         <div className="mb-4">
           <button
             onClick={handleBackToMain}
-            className="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+            className="inline-flex items-center text-teal-600 hover:text-teal-700 transition-colors"
           >
             <svg
               className="w-4 h-4 mr-2"

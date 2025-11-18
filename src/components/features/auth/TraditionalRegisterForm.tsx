@@ -80,7 +80,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
 
   return (
     <div className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
+      <h2 className="text-2xl font-bold text-center mb-6 text-teal-700">
         Crear Cuenta
       </h2>
 
@@ -96,7 +96,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="Tu nombre completo"
             required
           />
@@ -113,7 +113,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="tu@email.com"
             required
           />
@@ -130,7 +130,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="+51 999 999 999"
             required
           />
@@ -147,7 +147,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
             name="dni"
             value={formData.dni}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="12345678"
             maxLength={8}
           />
@@ -165,7 +165,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="Mínimo 6 caracteres"
               required
               minLength={6}
@@ -192,7 +192,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="Repite tu contraseña"
               required
             />
@@ -210,7 +210,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center"
+          className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-teal-400 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center"
         >
           {loading ? (
             <>
@@ -229,7 +229,7 @@ export const TraditionalRegisterForm: React.FC<TraditionalRegisterFormProps> = (
           ¿Ya tienes cuenta?{' '}
           <button
             onClick={onSwitchToLogin}
-            className="text-blue-600 hover:text-blue-700 font-semibold"
+            className="text-teal-600 hover:text-teal-700 font-semibold"
           >
             Inicia sesión
           </button>

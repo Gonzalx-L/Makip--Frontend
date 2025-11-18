@@ -63,7 +63,7 @@ export const TraditionalLoginForm: React.FC<TraditionalLoginFormProps> = ({
 
   return (
     <div className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
+      <h2 className="text-2xl font-bold text-center mb-6 text-teal-700">
         Iniciar Sesión
       </h2>
 
@@ -79,7 +79,7 @@ export const TraditionalLoginForm: React.FC<TraditionalLoginFormProps> = ({
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="tu@email.com"
             required
           />
@@ -97,7 +97,7 @@ export const TraditionalLoginForm: React.FC<TraditionalLoginFormProps> = ({
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="Tu contraseña"
               required
             />
@@ -116,7 +116,7 @@ export const TraditionalLoginForm: React.FC<TraditionalLoginFormProps> = ({
           <button
             type="button"
             onClick={onForgotPassword}
-            className="text-sm text-blue-600 hover:text-blue-700"
+            className="text-sm text-teal-600 hover:text-teal-700"
           >
             ¿Olvidaste tu contraseña?
           </button>
@@ -126,7 +126,7 @@ export const TraditionalLoginForm: React.FC<TraditionalLoginFormProps> = ({
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center"
+          className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-teal-400 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center"
         >
           {loading ? (
             <>
@@ -145,7 +145,7 @@ export const TraditionalLoginForm: React.FC<TraditionalLoginFormProps> = ({
           ¿No tienes cuenta?{' '}
           <button
             onClick={onSwitchToRegister}
-            className="text-blue-600 hover:text-blue-700 font-semibold"
+            className="text-teal-600 hover:text-teal-700 font-semibold"
           >
             Regístrate aquí
           </button>
