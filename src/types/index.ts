@@ -5,7 +5,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'customer' | 'admin';
+  role: "customer" | "admin";
   createdAt: Date;
 }
 
@@ -53,13 +53,13 @@ export interface Product {
 }
 
 // Estados de pedido (ENUM)
-export type OrderStatus = 
-  | 'NO_PAGADO'
-  | 'PAGO_EN_VERIFICACION' 
-  | 'PENDIENTE'
-  | 'EN_EJECUCION'
-  | 'TERMINADO'
-  | 'CANCELADO';
+export type OrderStatus =
+  | "NO_PAGADO"
+  | "PAGO_EN_VERIFICACION"
+  | "PENDIENTE"
+  | "EN_EJECUCION"
+  | "TERMINADO"
+  | "CANCELADO";
 
 // Datos de personalización por item (JSON)
 export interface PersonalizationData {
@@ -139,4 +139,28 @@ export interface SalesMetrics {
   totalOrders: number;
   topProducts: Product[];
   dailySales: { date: string; sales: number }[];
+}
+// src/types/index.ts
+
+// Datos para iniciar sesión
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+// Datos para registrarse (Coincide con tu backend: name, email, password, phone, dni)
+export interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  dni: string;
+}
+
+// Respuesta de autenticación del backend
+export interface AuthResponse {
+  message: string;
+  token: string;
+  client: User; // Asumiendo que ya tienes una interfaz User definida
+  isNewUser?: boolean;
 }

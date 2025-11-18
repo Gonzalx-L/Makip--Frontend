@@ -1,12 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 interface GoogleLoginButtonProps {
   onSuccess: (token: string) => void;
   onError?: (error: any) => void;
   clientId: string;
-  text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
-  theme?: 'outline' | 'filled_blue' | 'filled_black';
-  size?: 'large' | 'medium' | 'small';
+  text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+  theme?: "outline" | "filled_blue" | "filled_black";
+  size?: "large" | "medium" | "small";
 }
 
 // Declarar tipos globales para Google
@@ -28,23 +28,23 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   onSuccess,
   onError,
   clientId,
-  text = 'signin_with',
-  theme = 'outline',
-  size = 'large'
+  text = "signin_with",
+  theme = "outline",
+  size = "large",
 }) => {
   const buttonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Cargar el script de Google Identity Services
     const loadGoogleScript = () => {
-      if (document.getElementById('google-identity-script')) {
+      if (document.getElementById("google-identity-script")) {
         initializeGoogle();
         return;
       }
 
-      const script = document.createElement('script');
-      script.id = 'google-identity-script';
-      script.src = 'https://accounts.google.com/gsi/client';
+      const script = document.createElement("script");
+      script.id = "google-identity-script";
+      script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
       script.defer = true;
       script.onload = initializeGoogle;
@@ -64,8 +64,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           theme,
           size,
           text,
-          width: '100%',
-          shape: 'rectangular',
+          width: "100%",
+          shape: "rectangular",
         });
       }
     };
@@ -74,7 +74,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       if (response.credential) {
         onSuccess(response.credential);
       } else {
-        onError?.(new Error('No se recibió credential de Google'));
+        onError?.(new Error("No se recibió credential de Google"));
       }
     };
 
@@ -82,8 +82,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   }, [clientId, onSuccess, onError, text, theme, size]);
 
   return (
-    <div className="w-full">
-      <div ref={buttonRef} className="w-full flex justify-center"></div>
+    <div className='w-full'>
+      <div ref={buttonRef} className='w-full flex justify-center'></div>
     </div>
   );
 };

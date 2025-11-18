@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient } from "./api";
 
 export interface LoginCredentials {
   email: string;
@@ -27,6 +27,7 @@ export interface GoogleAuthResponse {
   message: string;
   client: Client;
   isNewUser: boolean;
+  token?: string; // por si luego decides devolver token también en Google
 }
 
 export interface AuthResponse {
@@ -35,64 +36,110 @@ export interface AuthResponse {
   token?: string;
 }
 
+export interface BasicMessageResponse {
+  message: string;
+}
+
 export const authService = {
+  // ==========================
   // Autenticación con Google
+  // ==========================
   loginWithGoogle: async (googleToken: string): Promise<GoogleAuthResponse> => {
-    const response = await apiClient.post('/auth/google', { token: googleToken });
-    const { client, isNewUser } = response.data;
-    
+    const response = await apiClient.post("/auth/google", {
+      token: googleToken,
+    });
+    const { client, token } = response.data;
+
+    // Guardar token si lo envías desde el backend
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
     // Guardar datos del cliente en localStorage
-    localStorage.setItem('client', JSON.stringify(client));
-    localStorage.setItem('isAuthenticated', 'true');
-    
+    localStorage.setItem("client", JSON.stringify(client));
+    localStorage.setItem("isAuthenticated", "true");
+
     return response.data;
   },
 
-  // Iniciar sesión (endpoint tradicional - si lo tienes)
+  // ==========================
+  // Login tradicional
+  // ==========================
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/login', credentials);
+    const response = await apiClient.post("/auth/login", credentials);
     const { client, token } = response.data;
-    
+
     // Guardar token en localStorage
-    if (token) localStorage.setItem('token', token);
-    localStorage.setItem('client', JSON.stringify(client));
-    
+    if (token) localStorage.setItem("token", token);
+    localStorage.setItem("client", JSON.stringify(client));
+    localStorage.setItem("isAuthenticated", "true");
+
     return response.data;
   },
 
-  // Registrar nuevo usuario
+  // ==========================
+  // Registro de usuario
+  // ==========================
   register: async (userData: RegisterData): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/register', userData);
+    const response = await apiClient.post("/auth/register", userData);
     const { client, token } = response.data;
-    
-    // Guardar token en localStorage
-    if (token) localStorage.setItem('token', token);
-    localStorage.setItem('client', JSON.stringify(client));
-    
+
+    if (token) localStorage.setItem("token", token);
+    localStorage.setItem("client", JSON.stringify(client));
+    localStorage.setItem("isAuthenticated", "true");
+
     return response.data;
   },
 
-  // Cerrar sesión
-  logout: (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('client');
-    localStorage.removeItem('isAuthenticated');
+  // ==========================
+  // Forgot / Reset Password
+  // ==========================
+  // Enviar correo de recuperación
+  requestPasswordReset: async (
+    email: string
+  ): Promise<BasicMessageResponse> => {
+    const response = await apiClient.post("/auth/forgot-password", { email });
+    return response.data; // { message: string }
   },
 
-  // Obtener cliente actual
+  // Cambiar contraseña usando token del correo
+  resetPassword: async (
+    token: string,
+    newPassword: string
+  ): Promise<BasicMessageResponse> => {
+    const response = await apiClient.post("/auth/reset-password", {
+      token,
+      newPassword,
+    });
+    return response.data; // { message: string }
+  },
+
+  // ==========================
+  // Logout
+  // ==========================
+  logout: (): void => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("client");
+    localStorage.removeItem("isAuthenticated");
+  },
+
+  // ==========================
+  // Utilidades
+  // ==========================
   getCurrentUser: (): Client | null => {
-    const clientStr = localStorage.getItem('client');
+    const clientStr = localStorage.getItem("client");
     return clientStr ? JSON.parse(clientStr) : null;
   },
 
-  // Verificar si está autenticado
   isAuthenticated: (): boolean => {
-    return localStorage.getItem('isAuthenticated') === 'true' || !!localStorage.getItem('token');
+    return (
+      localStorage.getItem("isAuthenticated") === "true" ||
+      !!localStorage.getItem("token")
+    );
   },
 
-  // Verificar token (si tienes endpoint para esto)
   verifyToken: async (): Promise<Client> => {
-    const response = await apiClient.get('/auth/verify');
+    const response = await apiClient.get("/auth/verify");
     return response.data;
-  }
+  },
 };
