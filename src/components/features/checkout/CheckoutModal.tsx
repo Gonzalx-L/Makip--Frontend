@@ -4,6 +4,7 @@ import { FaTimes, FaUpload } from 'react-icons/fa';
 import { CheckoutLoading } from './CheckoutLoading';
 import { orderService, type CreateOrderRequest } from '../../../services/orderService';
 import { uploadPaymentProofPublic } from '../../../services/paymentProofService';
+import { authService } from '../../../services/authService';
 import QRImage from '../../../assets/QR.png';
 
 interface CheckoutModalProps {
@@ -96,8 +97,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         payment_method: 'QR'
       };
       
-      // Crear orden en el backend
-      const response = await orderService.createOrder(orderData);
+      // Crear orden en el backend (usar servicio apropiado según autenticación)
+      const isAuthenticated = authService.isAuthenticated();
+      const response = isAuthenticated 
+        ? await orderService.createOrder(orderData)
+        : await orderService.createPublicOrder(orderData);
       
       setLoadingStep('validating');
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simular procesamiento

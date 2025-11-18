@@ -9,16 +9,28 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  phone?: string;
+  phone: string; // Requerido en backend
+  dni?: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
 }
 
 export interface Client {
   client_id: number;
-  google_uid: string;
+  google_uid?: string | null; // Opcional para usuarios tradicionales
   email: string;
   name: string;
   phone?: string;
+  dni?: string;
   address?: string;
+  password_hash?: string; // No se expone al frontend, pero puede venir
   created_at: string;
   updated_at: string;
 }
@@ -33,29 +45,40 @@ export interface AuthResponse {
   message: string;
   client: Client;
   token?: string;
+  isNewUser?: boolean;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
 }
 
 export const authService = {
   // Autenticación con Google
   loginWithGoogle: async (googleToken: string): Promise<GoogleAuthResponse> => {
     const response = await apiClient.post('/auth/google', { token: googleToken });
-    const { client, isNewUser } = response.data;
+    const { client, token: jwtToken, isNewUser } = response.data;
     
-    // Guardar datos del cliente en localStorage
+    // Guardar token JWT y datos del cliente en localStorage
+    if (jwtToken) localStorage.setItem('token', jwtToken);
     localStorage.setItem('client', JSON.stringify(client));
     localStorage.setItem('isAuthenticated', 'true');
     
     return response.data;
   },
 
-  // Iniciar sesión (endpoint tradicional - si lo tienes)
+  // Iniciar sesión tradicional
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/login', credentials);
-    const { client, token } = response.data;
+    const { client, token, isNewUser } = response.data;
     
-    // Guardar token en localStorage
+    // Guardar token JWT y datos del cliente en localStorage
     if (token) localStorage.setItem('token', token);
     localStorage.setItem('client', JSON.stringify(client));
+    localStorage.setItem('isAuthenticated', 'true');
     
     return response.data;
   },
@@ -63,11 +86,12 @@ export const authService = {
   // Registrar nuevo usuario
   register: async (userData: RegisterData): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/register', userData);
-    const { client, token } = response.data;
+    const { client, token, isNewUser } = response.data;
     
-    // Guardar token en localStorage
+    // Guardar token JWT y datos del cliente en localStorage
     if (token) localStorage.setItem('token', token);
     localStorage.setItem('client', JSON.stringify(client));
+    localStorage.setItem('isAuthenticated', 'true');
     
     return response.data;
   },
@@ -88,6 +112,18 @@ export const authService = {
   // Verificar si está autenticado
   isAuthenticated: (): boolean => {
     return localStorage.getItem('isAuthenticated') === 'true' || !!localStorage.getItem('token');
+  },
+
+  // Solicitar recuperación de contraseña
+  forgotPassword: async (email: string): Promise<ForgotPasswordResponse> => {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  // Resetear contraseña con token
+  resetPassword: async (token: string, newPassword: string): Promise<ResetPasswordResponse> => {
+    const response = await apiClient.post('/auth/reset-password', { token, newPassword });
+    return response.data;
   },
 
   // Verificar token (si tienes endpoint para esto)
