@@ -33,10 +33,38 @@ export const UserLoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí irá tu lógica de autenticación tradicional si la tienes
-    console.log('Login data:', { email, password });
+    
+    if (!email || !password) {
+      alert('Por favor, completa todos los campos.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await authService.login({ email, password });
+      
+      console.log('Login exitoso:', response);
+      
+      // Actualizar el contexto de autenticación
+      login(response.client);
+      
+      alert(`¡Bienvenido de nuevo ${response.client.name}!`);
+      
+      // Redirigir al usuario después del login
+      navigate('/');
+    } catch (error: any) {
+      console.error('Error en login:', error);
+      
+      // Mostrar mensaje de error más específico
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          'Error al iniciar sesión. Verifica tus credenciales.';
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSuccess = async (googleToken: string) => {

@@ -109,6 +109,14 @@ const ProductDetailPage: React.FC = () => {
     // La validación se ejecutará cuando el usuario haga clic en "Agregar al carrito"
     // Por ahora solo observamos los cambios del ID
   }, [id]);
+
+  // Hook de efecto para establecer la cantidad mínima cuando se carga el producto
+  useEffect(() => {
+    const currentProduct = backendProduct || mockProducts.find(p => p.product_id === Number(id));
+    if (currentProduct && currentProduct.min_order_quantity) {
+      setQuantity(currentProduct.min_order_quantity);
+    }
+  }, [backendProduct, id]);
   
   // AHORA sí podemos hacer validaciones condicionales
   // Test rápido: Si no hay ID, redirigir
