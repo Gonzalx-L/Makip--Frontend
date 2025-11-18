@@ -3,6 +3,7 @@ import { useCartStore } from '../../../store/cartStore';
 import { FaTimes, FaUpload } from 'react-icons/fa';
 import { CheckoutLoading } from './CheckoutLoading';
 import { orderService, type CreateOrderRequest } from '../../../services/orderService';
+import { uploadPaymentProofPublic } from '../../../services/paymentProofService';
 import QRImage from '../../../assets/QR.png';
 
 interface CheckoutModalProps {
@@ -108,7 +109,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         // Subir comprobante de pago si hay imagen
         if (selectedImage) {
           try {
-            await orderService.uploadPaymentProof(response.order.order_id, selectedImage);
+            await uploadPaymentProofPublic(response.order.order_id, selectedImage);
           } catch (uploadError) {
             console.warn('Error uploading payment proof:', uploadError);
             // Continuar aunque falle la subida del comprobante

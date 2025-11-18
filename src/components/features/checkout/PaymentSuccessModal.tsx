@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaWhatsapp, FaDownload, FaEye, FaUpload, FaSpinner } from 'react-icons/fa';
-import { uploadPaymentProof } from '../../../services/paymentProofService';
+import { uploadPaymentProofPublic } from '../../../services/paymentProofService';
 
 interface PaymentSuccessModalProps {
   isOpen: boolean;
@@ -72,7 +72,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
     setUploadMessage('Subiendo comprobante...');
 
     try {
-      const result = await uploadPaymentProof(orderId, file);
+      const result = await uploadPaymentProofPublic(orderId, file);
       setUploadStatus('success');
       setUploadMessage(result.message);
       
@@ -81,7 +81,17 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
       }
     } catch (error: any) {
       setUploadStatus('error');
-      setUploadMessage(error.message || 'Error al subir comprobante');
+      
+      let errorMessage = error.message || 'Error al subir comprobante';
+      
+      // Agregar contexto específico para diferentes errores
+      if (error.message?.includes('token') || error.response?.status === 401) {
+        errorMessage = '⚠️ Backend necesita ruta pública. Contacta al administrador.';
+      } else if (error.message?.includes('not found')) {
+        errorMessage = 'Orden no encontrada. Verifica el código de orden.';
+      }
+      
+      setUploadMessage(errorMessage);
     }
   };
 
