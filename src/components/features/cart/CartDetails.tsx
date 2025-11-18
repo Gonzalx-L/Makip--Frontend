@@ -110,8 +110,7 @@ export const CartDetails: React.FC = () => {
 
   // Calcular totales usando la función del store
   const subtotalInSoles = getTotalPrice();
-  const envioInSoles = subtotalInSoles > 0 ? 10 : 0; // Envío de S/ 10
-  const totalInSoles = subtotalInSoles + envioInSoles;
+  const totalInSoles = subtotalInSoles; // Sin costos de envío
 
   const handleCheckout = () => {
     // Removida la validación - permite checkout siempre para demo visual
@@ -163,10 +162,6 @@ export const CartDetails: React.FC = () => {
             <div className="flex justify-between text-gray-700">
               <span>Subtotal</span>
               <span className="font-medium">S/ {formatPrice(subtotalInSoles)}</span>
-            </div>
-            <div className="flex justify-between text-gray-700">
-              <span>Envío</span>
-              <span className="font-medium">S/ {formatPrice(envioInSoles)}</span>
             </div>
           </div>
           <div className="border-t mt-4 pt-4">

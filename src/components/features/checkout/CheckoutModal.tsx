@@ -39,8 +39,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   const subtotal = getTotalPrice() || 0; // Precio real del carrito
-  const envio = subtotal > 0 ? 10.00 : 0; // S/ 10.00 de envío solo si hay productos
-  const total = subtotal + envio;
+  const total = subtotal; // Sin costos de envío
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +122,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-900">
-            {step === 'shipping' ? 'Información de Envío' : 'Pago con QR - Yape/Plin'}
+            {step === 'shipping' ? 'Información de Cliente' : 'Pago con QR - Yape/Plin'}
           </h2>
           <button 
             onClick={onClose}
@@ -142,7 +141,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               }`}>
                 1
               </div>
-              <span className="ml-2 font-medium">Información de Envío</span>
+              <span className="ml-2 font-medium">Información de Cliente</span>
             </div>
             <div className="w-16 h-0.5 bg-gray-200"></div>
             <div className={`flex items-center ${step === 'image' ? 'text-teal-600' : 'text-gray-400'}`}>
@@ -158,7 +157,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         <div className="p-6">
           {step === 'shipping' ? (
-            /* Formulario de Envío - DEMO VERSION */
+            /* Formulario de Cliente - DEMO VERSION */
             <form onSubmit={handleShippingSubmit} className="space-y-4"> 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -312,10 +311,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       <span>S/ 0.00</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span>Envío</span>
-                    <span>S/ {formatPrice(envio)}</span>
-                  </div>
                   <div className="flex justify-between font-bold text-lg pt-2 border-t border-teal-200">
                     <span>Total a Pagar</span>
                     <span className="text-teal-700">S/ {formatPrice(total)}</span>
