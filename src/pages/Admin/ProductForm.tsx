@@ -24,6 +24,7 @@ interface PersonalizationMetadata {
   coords_x: number | "";
   coords_y: number | "";
   max_width: number | "";
+  allows_image: boolean;
 }
 
 interface VariantOption {
@@ -122,6 +123,7 @@ const ProductForm: React.FC = () => {
       coords_x: "",
       coords_y: "",
       max_width: "",
+      allows_image: false,
     },
     variants: [],
   });
@@ -173,6 +175,7 @@ const ProductForm: React.FC = () => {
             coords_x: product.personalization_metadata?.coords_x ?? "",
             coords_y: product.personalization_metadata?.coords_y ?? "",
             max_width: product.personalization_metadata?.max_width ?? "",
+            allows_image: product.personalization_metadata?.allows_image ?? false,
           },
           variants: parseVariantsFromDB(product.variants),
         });
@@ -208,6 +211,19 @@ const ProductForm: React.FC = () => {
     // Personalization
     if (name.startsWith("personalization_")) {
       const field = name.split("_")[1];
+      
+      if (field === "image") {
+        // Handle checkbox for allows_image
+        setFormData((prev) => ({
+          ...prev,
+          personalization_metadata: {
+            ...prev.personalization_metadata,
+            allows_image: (e.target as HTMLInputElement).checked,
+          },
+        }));
+        return;
+      }
+      
       const map: Record<string, keyof PersonalizationMetadata> = {
         x: "coords_x",
         y: "coords_y",
@@ -375,6 +391,7 @@ const ProductForm: React.FC = () => {
         coords_x: Number(formData.personalization_metadata.coords_x) || 0,
         coords_y: Number(formData.personalization_metadata.coords_y) || 0,
         max_width: Number(formData.personalization_metadata.max_width) || 0,
+        allows_image: formData.personalization_metadata.allows_image,
       },
       variants: serializeVariantsForDB(formData.variants),
     };
@@ -622,6 +639,20 @@ const ProductForm: React.FC = () => {
                   className='border rounded-md p-2 w-full'
                 />
               </div>
+            </div>
+
+            <div className='flex items-center space-x-3 mt-4'>
+              <input
+                type='checkbox'
+                id='allows_image'
+                name='personalization_image'
+                checked={formData.personalization_metadata.allows_image}
+                onChange={handleChange}
+                className='h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+              />
+              <label htmlFor='allows_image' className='text-sm font-medium text-gray-700'>
+                Permitir subir imagen personalizada
+              </label>
             </div>
           </div>
 

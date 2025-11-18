@@ -21,16 +21,9 @@ export const CartPage: React.FC = () => {
         {/* Información adicional */}
         <div className="mt-12 bg-white rounded-lg shadow-md p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
-            🚚 Información de Envío
+            🛒 Información de Compra
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-green-600 text-xl">📦</span>
-              </div>
-              <h4 className="font-semibold text-gray-900">Envío Gratis</h4>
-              <p className="text-sm text-gray-600">En compras mayores a S/ 100</p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="text-center">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-blue-600 text-xl">⏱️</span>

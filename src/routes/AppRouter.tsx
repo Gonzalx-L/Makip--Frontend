@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LoginAdm from "../pages/LoginAdm";
+import LoginAdm from "../pages/Admin/LoginAdm";
 
 // --- PÁGINA DE INICIO (DESTINO) ---
 // (Creamos un simple placeholder por ahora)
