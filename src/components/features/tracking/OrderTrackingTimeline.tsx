@@ -63,9 +63,9 @@ export const OrderTrackingTimeline: React.FC<OrderTrackingTimelineProps> = ({ tr
             <div className="bg-white rounded-lg shadow-md p-6 sm:p-8">
                 {/* Fila Superior: Info y Timeline (Grid de 2 columnas) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Columna 1: Información del Envío (Centrada) */}
+                    {/* Columna 1: Información del Pedido (Centrada) */}
                     <div className="self-center"> {/* <-- 4. ¡AQUÍ CENTRAMOS VERTICALMENTE! */}
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Información del Envío</h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Información del Pedido</h2>
                         <div className="space-y-4">
                             <div>
                                 <h3 className="text-sm font-medium text-gray-500">Carrieres:</h3>

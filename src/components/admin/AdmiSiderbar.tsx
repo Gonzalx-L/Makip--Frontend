@@ -6,6 +6,7 @@ import {
   FaTh, // Para Productos
   FaFolder, // Para Órdenes
 } from "react-icons/fa";
+import logoMakip from '../../assets/Makip-logo.png';
 import { MdOutlineDashboard } from "react-icons/md";
 import { LuUsers } from "react-icons/lu"; // Para Clientes
 import { useAdminAuth } from "../../contexts/AdminAuthContext"; // 💡 Para el Perfil
@@ -71,8 +72,8 @@ const AdmiSiderbar: React.FC = () => {
           showSidebar ? "translate-x-0" : "-translate-x-full"
         } w-64 md:translate-x-0 md:relative md:w-64`}>
         {/* Header */}
-        <div className='p-6 border-b border-gray-700'>
-          <span className='w-8 h-8 bg-red-500 rounded-lg inline-block mr-3'></span>
+        <div className='p-6 border-b border-gray-700 flex items-center space-x-3'>
+          <img src={logoMakip} alt="Makip" className="w-10 h-10 object-cover" />
           <span className='text-xl font-bold text-white'>MAKIP Admin</span>
         </div>
 

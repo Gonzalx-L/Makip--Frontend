@@ -19,25 +19,36 @@ const AdmiNavbar = () => {
   }, []);
 
   return (
-    // 💡 1. Navbar oscuro (bg-gray-900) y más ancho (py-5)
-    <div className='bg-gray-900 text-white border-b border-gray-700 px-6 py-5'>
-      <div className='flex items-center justify-end space-x-4'>
-        <span className='text-gray-300 text-sm'>
-          Hola, <b>{adminUser?.name || "Admin"}</b>
-        </span>
+    <div className='bg-gray-900 text-white border-b border-gray-700 px-4 md:px-6 py-4 md:py-5'>
+      <div className='flex items-center justify-between md:justify-end space-x-3 md:space-x-4'>
+        {/* Mobile: Show admin info more prominently */}
+        <div className="md:hidden">
+          <span className='text-white text-sm font-medium'>
+            <b>{adminUser?.name || "Admin"}</b>
+          </span>
+        </div>
+
+        {/* Desktop: Normal admin greeting */}
+        <div className="hidden md:block">
+          <span className='text-gray-300 text-sm'>
+            Hola, <b>{adminUser?.name || "Admin"}</b>
+          </span>
+        </div>
 
         <div className='relative' ref={menuRef}>
           <button
-            className='flex items-center text-gray-400 hover:text-white transition-colors'
-            onClick={() => setOpen((v) => !v)}>
+            className='flex items-center text-gray-400 hover:text-white transition-colors p-1'
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Menu de usuario"
+          >
             <FaChevronDown />
           </button>
           {open && (
-            // 💡 2. Dropdown oscuro
-            <div className='absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-50'>
+            <div className='absolute right-0 mt-2 w-40 md:w-48 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-50'>
               <button
-                className='w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center space-x-2'
-                onClick={logout}>
+                className='w-full text-left px-3 md:px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center space-x-2'
+                onClick={logout}
+              >
                 <FaSignOutAlt className='text-gray-500' />
                 <span>Cerrar sesión</span>
               </button>
