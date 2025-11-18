@@ -1,5 +1,3 @@
-// src/pages/Admin/OrderDetailPage.tsx
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import apiClient from "../../services/admi/apiClient";
@@ -10,25 +8,41 @@ import {
   CheckCircle,
   Package,
 } from "lucide-react";
-import StatusBadge, {
-  type OrderStatus,
-} from "../../components/admin/StatusBadge";
 import axios from "axios";
 
+// --- Type: OrderStatus ---
+// Si quieres centralizar, colócalo en /types/OrderStatus.ts y exporta desde ahí
+export type OrderStatus =
+  | "NO_PAGADO"
+  | "PAGO_EN_VERIFICACION"
+  | "PENDIENTE"
+  | "EN_EJECUCION"
+  | "TERMINADO"
+  | "CANCELADO";
+
+// Etiquetas legibles para mostrar en el select
+// eslint-disable-next-line react-refresh/only-export-components
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  NO_PAGADO: "No pagado",
+  PAGO_EN_VERIFICACION: "Pago en verificación",
+  PENDIENTE: "Pendiente",
+  EN_EJECUCION: "En ejecución",
+  TERMINADO: "Terminado",
+  CANCELADO: "Cancelado",
+};
+
 // --- Interfaces de Datos (basadas en tu backend) ---
-// Los items que vienen dentro del pedido
 interface OrderItem {
   order_item_id: number;
   product_name: string;
   quantity: number;
   item_price: string;
   personalization_data: {
-    image_url?: string; // El logo que subió el cliente
+    image_url?: string;
     text?: string;
   } | null;
 }
 
-// La orden completa (incluye los items)
 interface OrderDetails {
   order_id: number;
   client_name: string;
@@ -36,7 +50,7 @@ interface OrderDetails {
   status: OrderStatus;
   total_price: string | number;
   created_at: string;
-  payment_proof_url: string | null; // Comprobante
+  payment_proof_url: string | null;
   items: OrderItem[];
 }
 
@@ -44,13 +58,13 @@ interface ErrorResponse {
   message?: string;
 }
 
-// Estados que el admin puede seleccionar (DEBEN EXISTIR en OrderStatus)
+// Estados válidos para el admin
 const statusOptions: OrderStatus[] = [
   "NO_PAGADO",
   "PAGO_EN_VERIFICACION",
-  "Pendiente",
-  "Procesando",
-  "Completado",
+  "PENDIENTE",
+  "EN_EJECUCION",
+  "TERMINADO",
   "CANCELADO",
 ];
 
@@ -62,7 +76,7 @@ const OrderDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estado para el dropdown y el botón de guardar
+  // Inicializa con "" para el select, pero el tipo ahora es OrderStatus | ""
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "">("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -106,7 +120,7 @@ const OrderDetailPage: React.FC = () => {
       });
 
       // Actualiza el estado localmente
-      setOrder({ ...order, status: selectedStatus });
+      setOrder({ ...order, status: selectedStatus as OrderStatus });
       setSaveSuccess(true);
 
       // Oculta el "Guardado" después de 2s
@@ -135,7 +149,6 @@ const OrderDetailPage: React.FC = () => {
   }
 
   if (error && !order) {
-    // Si hay error Y no hay orden
     return (
       <div className='p-10 flex flex-col items-center'>
         <AlertCircle className='h-12 w-12 text-red-500' />
@@ -179,15 +192,18 @@ const OrderDetailPage: React.FC = () => {
           </p>
         </div>
         <div className='mt-4 md:mt-0'>
-          <StatusBadge status={order.status} />
+          {/* Aquí puedes mostrar un StatusBadge bonito */}
+          <span className='inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-medium'>
+            {ORDER_STATUS_LABELS[order.status]}
+          </span>
         </div>
       </div>
 
-      {/* Grid Principal (Datos y Acciones) */}
+      {/* Grid Principal */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-        {/* Columna Izquierda: Artículos y Comprobante */}
+        {/* Columna Izquierda */}
         <div className='lg:col-span-2 space-y-6'>
-          {/* 1. Comprobante de Pago */}
+          {/* Comprobante de Pago */}
           <div className='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
             <h2 className='text-xl font-semibold text-gray-800 mb-4'>
               Comprobante de Pago
@@ -210,7 +226,7 @@ const OrderDetailPage: React.FC = () => {
             )}
           </div>
 
-          {/* 2. Artículos del Pedido */}
+          {/* Artículos del Pedido */}
           <div className='rounded-lg border border-gray-200 bg-white shadow-sm'>
             <h2 className='text-xl font-semibold text-gray-800 p-6'>
               Artículos del Pedido
@@ -292,7 +308,7 @@ const OrderDetailPage: React.FC = () => {
                   </option>
                   {statusOptions.map((status) => (
                     <option key={status} value={status}>
-                      {status.replace(/_/g, " ")}
+                      {ORDER_STATUS_LABELS[status]}
                     </option>
                   ))}
                 </select>
@@ -322,12 +338,12 @@ const OrderDetailPage: React.FC = () => {
 
               {error && <p className='text-sm text-red-600'>{error}</p>}
 
-              {/* Aviso contextual (puedes ajustar la lógica a tu flujo real) */}
-              {selectedStatus === "Procesando" &&
-                order.status !== "Procesando" && (
+              {/* Aviso contextual */}
+              {selectedStatus === "EN_EJECUCION" &&
+                order.status !== "EN_EJECUCION" && (
                   <p className='text-sm text-blue-600'>
-                    Al pasar a &quot;Procesando&quot; puedes coordinar la
-                    generación del mockup y contacto con el cliente.
+                    Al pasar a "En ejecución" puedes coordinar la generación del
+                    mockup y contacto con el cliente.
                   </p>
                 )}
             </div>
