@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCheckCircle, FaWhatsapp, FaDownload, FaEye } from 'react-icons/fa';
+import { FaCheckCircle, FaWhatsapp, FaDownload, FaEye, FaUpload, FaSpinner } from 'react-icons/fa';
+import { uploadPaymentProof } from '../../../services/paymentProofService';
 
 interface PaymentSuccessModalProps {
   isOpen: boolean;
@@ -16,6 +17,9 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(10);
   const [confetti, setConfetti] = useState(true);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadMessage, setUploadMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -54,6 +58,31 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
   const handleDownloadReceipt = () => {
     // Simular descarga de comprobante
     alert('Comprobante descargado (simulación)');
+  };
+
+  const handleUploadProof = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadStatus('uploading');
+    setUploadMessage('Subiendo comprobante...');
+
+    try {
+      const result = await uploadPaymentProof(orderId, file);
+      setUploadStatus('success');
+      setUploadMessage(result.message);
+      
+      if (result.isApproved) {
+        setUploadMessage('¡Pago verificado automáticamente! 🎉');
+      }
+    } catch (error: any) {
+      setUploadStatus('error');
+      setUploadMessage(error.message || 'Error al subir comprobante');
+    }
   };
 
   if (!isOpen) return null;
@@ -119,6 +148,60 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
           </div>
         </div>
 
+        {/* Subir comprobante */}
+        <div className="px-8 pb-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
+              <FaUpload className="mr-2 text-yellow-600" />
+              Subir Comprobante de Pago
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Sube tu comprobante para acelerar la verificación del pago
+            </p>
+            
+            {uploadStatus === 'idle' && (
+              <button
+                onClick={handleUploadProof}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300"
+              >
+                <FaUpload className="inline mr-2" />
+                Seleccionar Comprobante
+              </button>
+            )}
+
+            {uploadStatus === 'uploading' && (
+              <div className="text-center py-3">
+                <FaSpinner className="animate-spin inline mr-2" />
+                <span className="text-gray-700">Subiendo comprobante...</span>
+              </div>
+            )}
+
+            {(uploadStatus === 'success' || uploadStatus === 'error') && (
+              <div className={`p-3 rounded-lg ${
+                uploadStatus === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+                <p className="text-sm">{uploadMessage}</p>
+                {uploadStatus === 'error' && (
+                  <button
+                    onClick={handleUploadProof}
+                    className="mt-2 text-sm underline hover:no-underline"
+                  >
+                    Intentar de nuevo
+                  </button>
+                )}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+        </div>
+
         {/* Qué sigue */}
         <div className="px-8 pb-6">
           <h3 className="font-semibold text-gray-900 mb-4">¿Qué sigue?</h3>
@@ -127,19 +210,19 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-bold text-xs">1</span>
               </div>
-              <span className="text-gray-700">Procesamos tu pedido (24h)</span>
+              <span className="text-gray-700">Sube tu comprobante de pago</span>
             </div>
             <div className="flex items-center space-x-3 text-sm">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-bold text-xs">2</span>
               </div>
-              <span className="text-gray-700">Preparamos tu producto personalizado</span>
+              <span className="text-gray-700">Verificamos el pago (automático)</span>
             </div>
             <div className="flex items-center space-x-3 text-sm">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-bold text-xs">3</span>
               </div>
-              <span className="text-gray-700">Enviamos y te notificamos el tracking</span>
+              <span className="text-gray-700">Preparamos y enviamos tu pedido</span>
             </div>
           </div>
         </div>

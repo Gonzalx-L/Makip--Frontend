@@ -121,6 +121,9 @@ export const CartDetails: React.FC = () => {
     setOrderId(newOrderId);
     setIsCheckoutOpen(false);
     setIsSuccessOpen(true);
+    
+    // Limpiar el carrito después de una compra exitosa
+    clearCart();
   };
 
   return (

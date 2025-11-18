@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCartStore } from '../../../store/cartStore';
 import { FaTimes, FaUpload } from 'react-icons/fa';
 import { CheckoutLoading } from './CheckoutLoading';
+import { orderService, type CreateOrderRequest } from '../../../services/orderService';
 import QRImage from '../../../assets/QR.png';
 
 interface CheckoutModalProps {
@@ -68,30 +69,61 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     // Procesar el pago QR con los datos del cliente
     setLoading(true);
     try {
+      setLoadingStep('processing');
+      
+      // Preparar datos de la orden para el backend
+      const orderData: CreateOrderRequest = {
+        customer_info: {
+          full_name: shippingData.fullName,
+          email: shippingData.email,
+          phone: shippingData.phone,
+          address: shippingData.address,
+          city: shippingData.city,
+          postal_code: shippingData.postalCode || undefined,
+          reference: shippingData.reference || undefined
+        },
+        items: items.map(item => ({
+          product_id: item.product.product_id,
+          quantity: item.quantity,
+          unit_price: item.product.base_price,
+          personalization: item.personalization ? {
+            text: item.personalization.text,
+            cost: item.personalization.cost || 0
+          } : undefined
+        })),
+        total_amount: total,
+        payment_method: 'QR'
+      };
+      
+      // Crear orden en el backend
+      const response = await orderService.createOrder(orderData);
+      
       setLoadingStep('validating');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simular procesamiento
       
-      setLoadingStep('completing');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (response.success) {
+        setLoadingStep('completing');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Subir comprobante de pago si hay imagen
+        if (selectedImage) {
+          try {
+            await orderService.uploadPaymentProof(response.order.order_id, selectedImage);
+          } catch (uploadError) {
+            console.warn('Error uploading payment proof:', uploadError);
+            // Continuar aunque falle la subida del comprobante
+          }
+        }
+        
+        onPaymentSuccess(response.order.order_id.toString());
+      } else {
+        throw new Error(response.message || 'Error al crear la orden');
+      }
       
-      // Generar ID de pedido
-      const orderId = `MKP${Date.now().toString().slice(-6)}`;
-      
-      // Aquí se podrían enviar los datos del cliente al backend
-      console.log('Datos del pedido:', {
-        orderId,
-        customer: shippingData,
-        items,
-        total,
-        paymentMethod: 'QR',
-        paymentProof: selectedImage.name
-      });
-      
-      onPaymentSuccess(orderId);
-      
-    } catch (error) {
-      console.error('Error validating payment:', error);
-      alert('Error al validar el comprobante. Inténtalo de nuevo.');
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Error al procesar la orden';
+      alert(`Error: ${errorMessage}. Inténtalo de nuevo.`);
     } finally {
       setLoading(false);
     }
