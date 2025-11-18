@@ -1,10 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProductList } from '../../components/features/products/ProductList';
 import bannerImage from '../../assets/banner1.jpg';
+import { productService } from '../../services/productService';
 
 const ProductsPage: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState(500);
-  const [selectedCategory, setSelectedCategory] = useState('Todas'); 
+  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [categories, setCategories] = useState<string[]>(['Todas']);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const products = await productService.getAll();
+        const uniqueCategories: string[] = [
+          'Todas',
+          ...new Set(products.filter(p => p.category_name).map(p => p.category_name!))
+        ];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        // En caso de error, usar categorías por defecto
+        setCategories(['Todas', 'Camisetas', 'Accesorios', 'Tazas', 'Tejidos']);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -68,11 +89,11 @@ const ProductsPage: React.FC = () => {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              <option>Todas</option>
-              <option>Camisetas</option>
-              <option>Accesorios</option>
-              <option>Tazas</option>
-              <option>Tejidos</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
             </select>
           </div>
 

@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Product } from '../../../types';
 import { ProductCard } from '../../ui/products/ProductCard';
-import { useApi } from '../../../hooks/useApi';
 import { productService } from '../../../services/productService';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 // --- DATOS MOCK ACTUALIZADOS PARA NUEVA ESTRUCTURA BD ---
 const mockProducts: Product[] = [
@@ -95,74 +95,75 @@ export const ProductList: React.FC<ProductListProps> = ({
   maxPrice = 500, 
   selectedCategory = 'Todas' 
 }) => {
-  // Usar el servicio real cuando esté disponible el backend
-  const { data: products, loading, error } = useApi(() => productService.getAll(), []);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        // Intentar cargar productos reales del backend
+        const products = await productService.getAll();
+        setAllProducts(products);
+        
+      } catch (err) {
+        console.error('Error al cargar productos:', err);
+        // En caso de error, usar productos mock como fallback
+        setError('No se pudieron cargar los productos del servidor');
+        setAllProducts(mockProducts);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  if (error) {
-    // Aplicar filtros también a los productos mock en caso de error
-    const filteredMockProducts = mockProducts.filter((product) => {
-      const priceInSoles = product.base_price;
+    fetchProducts();
+  }, []);
+
+  // Filtrar productos usando useMemo para optimizar rendimiento
+  const filteredProducts = useMemo(() => {
+    return allProducts.filter((product) => {
+      // Filtro de precio - convertir a número si es string
+      const priceInSoles = typeof product.base_price === 'string' 
+        ? parseFloat(product.base_price) 
+        : product.base_price;
       const meetsPriceFilter = priceInSoles <= maxPrice;
+      
+      // Filtro de categoría
       const meetsCategoryFilter = 
         selectedCategory === 'Todas' || 
         product.category_name === selectedCategory;
-      return meetsPriceFilter && meetsCategoryFilter;
+      
+      // Solo mostrar productos activos
+      const isActiveProduct = product.is_active !== false;
+      
+      return meetsPriceFilter && meetsCategoryFilter && isActiveProduct;
     });
+  }, [allProducts, maxPrice, selectedCategory]);
 
+  if (isLoading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600 mb-4">Error al cargar productos: {error}</p>
-        <p className="text-gray-600">Mostrando productos de ejemplo:</p>
-        
-        {/* Información de filtros */}
-        <div className="mb-4 text-sm text-gray-600">
-          Mostrando {filteredMockProducts.length} productos de {mockProducts.length}
-          {maxPrice < 500 && ` con precio hasta S/ ${maxPrice}`}
-          {selectedCategory !== 'Todas' && ` en la categoría "${selectedCategory}"`}
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
-          {filteredMockProducts.length > 0 ? (
-            filteredMockProducts.map((product) => (
-              <ProductCard key={product.product_id} product={product} />
-            ))
-          ) : (
-            <div className="col-span-full">
-              <p className="text-gray-500 text-lg">No se encontraron productos que coincidan con los filtros.</p>
-            </div>
-          )}
-        </div>
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
       </div>
     );
   }
 
-  // Usar productos del backend si están disponibles, sino usar mock
-  const allProducts = products || mockProducts;
-
-  // Aplicar filtros
-  const filteredProducts = allProducts.filter((product) => {
-    // Filtro de precio
-    const priceInSoles = product.base_price;
-    const meetsPriceFilter = priceInSoles <= maxPrice;
-    
-    // Filtro de categoría
-    const meetsCategoryFilter = 
-      selectedCategory === 'Todas' || 
-      product.category_name === selectedCategory;
-    
-    return meetsPriceFilter && meetsCategoryFilter;
-  });
-
   return (
     <div>
+      {/* Mostrar mensaje de error si existe, pero seguir mostrando productos */}
+      {error && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
+            <p className="text-yellow-800 text-sm">
+              {error}. Mostrando productos de ejemplo.
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Mostrar información de filtros aplicados */}
       <div className="mb-4 text-sm text-gray-600">
         Mostrando {filteredProducts.length} productos de {allProducts.length}
