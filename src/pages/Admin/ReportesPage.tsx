@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
-// 💡 1. Corrigiendo las rutas de importación
+// 💡 1. Corrigiendo las rutas de importación (ahora absolutas)
 import apiClient from "../../services/admi/apiClient";
+import StatusBadge, {
+  type OrderStatus,
+} from "../../components/admin/StatusBadge";
+import { useDebounce } from "../../hooks/useDebounce";
+
+// 💡 2. Corrigiendo el icono
 import {
   Loader2,
   AlertCircle,
   Eye,
   Search,
   CalendarDays,
-  FileText,
+  FileText, // 👈 Este es el icono correcto
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import StatusBadge, {
-  type OrderStatus,
-} from "../../components/admin/StatusBadge";
-import { useDebounce } from "../../hooks/useDebounce";
 
 // Interface de la Orden (devuelta por el endpoint /admin/reports)
 interface Order {
@@ -25,7 +27,6 @@ interface Order {
   created_at: string;
 }
 
-// 💡 2. Componente renombrado a ReportesPage
 const ReportesPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +41,6 @@ const ReportesPage: React.FC = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Hook para no saturar la API con cada tecla
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
@@ -49,8 +49,6 @@ const ReportesPage: React.FC = () => {
       setError(null);
       try {
         const params = new URLSearchParams();
-
-        // 'clientName' en el backend ahora busca por ID o Nombre
         if (debouncedSearchTerm) {
           params.append("clientName", debouncedSearchTerm);
         }
@@ -61,7 +59,6 @@ const ReportesPage: React.FC = () => {
           params.append("endDate", endDate);
         }
 
-        // 💡 3. Llamada al endpoint de reportes
         const response = await apiClient.get<Order[]>(
           `/admin/reports?${params.toString()}`
         );
@@ -76,37 +73,26 @@ const ReportesPage: React.FC = () => {
     fetchOrders();
   }, [debouncedSearchTerm, startDate, endDate]);
 
-  // Navega a la página de detalle (la misma que usa "Órdenes")
+  // Navega a la página de detalle
   const handleViewDetails = (id: number) => {
     navigate(`/admin/ordenes/${id}`);
   };
 
-  // 💡 4. Función para descargar y previsualizar el PDF
+  // Función para descargar y previsualizar el PDF
   const handlePreviewPdf = async (orderId: number) => {
-    setIsPdfLoading(orderId); // Muestra el spinner en este botón
+    setIsPdfLoading(orderId);
     try {
-      // Pedimos el PDF al backend. Es crucial el 'responseType: blob'
-      const response = await apiClient.get(
-        `/admin/orders/${orderId}/pdf`, // Endpoint seguro que genera el PDF
-        {
-          responseType: "blob", // 👈 Esto le dice a axios que espere un archivo
-        }
-      );
-
-      // Creamos un Blob (archivo en memoria) con el PDF
+      const response = await apiClient.get(`/admin/orders/${orderId}/pdf`, {
+        responseType: "blob",
+      });
       const file = new Blob([response.data], { type: "application/pdf" });
-
-      // Creamos una URL temporal para ese archivo en memoria
       const fileURL = URL.createObjectURL(file);
-
-      // Abrimos esa URL temporal en una nueva pestaña del navegador
       window.open(fileURL, "_blank");
     } catch (err) {
       console.error("Error al previsualizar el PDF:", err);
-      // Actualiza el estado de error para que el usuario lo vea
       setError(`No se pudo cargar el PDF para la orden #${orderId}.`);
     } finally {
-      setIsPdfLoading(null); // Oculta el spinner
+      setIsPdfLoading(null);
     }
   };
 
@@ -122,7 +108,6 @@ const ReportesPage: React.FC = () => {
     <div className='p-6 md:p-8 lg:p-10'>
       {/* Encabezado */}
       <div className='mb-6 flex items-center justify-between'>
-        {/* 💡 5. Título de la página cambiado */}
         <h1 className='text-3xl font-bold text-gray-900'>
           Reportes de Órdenes
         </h1>
@@ -136,7 +121,7 @@ const ReportesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filtros (exactamente como en OrdersPage) */}
+      {/* Filtros */}
       <div className='mb-4 grid grid-cols-1 md:grid-cols-3 gap-4'>
         {/* Filtro por Cliente/ID */}
         <div className='relative'>
@@ -204,7 +189,7 @@ const ReportesPage: React.FC = () => {
                     <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
                       #{order.order_id}
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
+                    <td className='px-6 py-4 whitespace-nowcrap text-sm text-gray-700'>
                       {order.client_name}
                       <div className='text-xs text-gray-500'>
                         {order.client_email}
@@ -226,7 +211,7 @@ const ReportesPage: React.FC = () => {
                       S/ {Number(order.total_price).toFixed(2)}
                     </td>
 
-                    {/* 💡 6. Acciones (PDF y Ver Detalle) */}
+                    {/* Acciones (PDF y Ver Detalle) */}
                     <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4'>
                       {/* Botón de PDF */}
                       <button
@@ -236,6 +221,7 @@ const ReportesPage: React.FC = () => {
                         {isPdfLoading === order.order_id ? (
                           <Loader2 size={16} className='animate-spin' />
                         ) : (
+                          // 💡 3. Usando el icono corregido
                           <FileText size={16} />
                         )}
                         Ver PDF
@@ -268,5 +254,4 @@ const ReportesPage: React.FC = () => {
   );
 };
 
-// 💡 7. Exporta el nuevo componente
 export default ReportesPage;
