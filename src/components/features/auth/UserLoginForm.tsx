@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { GoogleLoginButton } from './GoogleLoginButton';
-import { authService } from '../../../services/authService';
-import { useAuthContext } from '../../../contexts/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { GoogleLoginButton } from "./GoogleLoginButton";
+import { authService } from "../../../services/authService";
+import { useAuthContext } from "../../../contexts/AuthContext";
 
 // Asumo que tus componentes de UI se exportan así.
 // ¡Verifica la ruta y los nombres!
@@ -24,7 +24,6 @@ const Button = (props: any) => (
   />
 );
 // --- Fin del Placeholder ---
-
 
 export const UserLoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -77,25 +76,29 @@ export const UserLoginForm: React.FC = () => {
       // Actualizar el contexto de autenticación
       login(response.client);
 
+
       if (response.isNewUser) {
-        alert(`¡Bienvenido ${response.client.name}! Tu cuenta ha sido creada exitosamente.`);
+        alert(
+          `¡Bienvenido ${response.client.name}! Tu cuenta ha sido creada exitosamente.`
+        );
       } else {
         alert(`¡Hola de nuevo ${response.client.name}!`);
       }
 
+
       // Redirigir al usuario después del login
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Error en login:', error);
-      alert('Error al iniciar sesión con Google. Inténtalo de nuevo.');
+      console.error("Error en login:", error);
+      alert("Error al iniciar sesión con Google. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleError = (error: any) => {
-    console.error('Error de Google Auth:', error);
-    alert('Error al conectar con Google. Inténtalo de nuevo.');
+    console.error("Error de Google Auth:", error);
+    alert("Error al conectar con Google. Inténtalo de nuevo.");
   };
 
   return (

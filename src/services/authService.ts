@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient } from "./api";
 
 export interface LoginCredentials {
   email: string;
@@ -39,6 +39,7 @@ export interface GoogleAuthResponse {
   message: string;
   client: Client;
   isNewUser: boolean;
+  token?: string; // por si luego decides devolver token también en Google
 }
 
 export interface AuthResponse {
@@ -57,7 +58,9 @@ export interface ResetPasswordResponse {
 }
 
 export const authService = {
+  // ==========================
   // Autenticación con Google
+  // ==========================
   loginWithGoogle: async (googleToken: string): Promise<GoogleAuthResponse> => {
     const response = await apiClient.post('/auth/google', { token: googleToken });
     // Huber usaba 'token' aquí, lo cambiamos a 'jwtToken' para evitar conflicto de nombres
@@ -85,7 +88,9 @@ export const authService = {
     return response.data;
   },
 
-  // Registrar nuevo usuario
+  // ==========================
+  // Registro de usuario
+  // ==========================
   register: async (userData: RegisterData): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/register', userData);
     const { client, token, isNewUser } = response.data;
@@ -99,7 +104,32 @@ export const authService = {
     return response.data;
   },
 
-  // Cerrar sesión
+  // ==========================
+  // Forgot / Reset Password
+  // ==========================
+  // Enviar correo de recuperación
+  requestPasswordReset: async (
+    email: string
+  ): Promise<BasicMessageResponse> => {
+    const response = await apiClient.post("/auth/forgot-password", { email });
+    return response.data; // { message: string }
+  },
+
+  // Cambiar contraseña usando token del correo
+  resetPassword: async (
+    token: string,
+    newPassword: string
+  ): Promise<BasicMessageResponse> => {
+    const response = await apiClient.post("/auth/reset-password", {
+      token,
+      newPassword,
+    });
+    return response.data; // { message: string }
+  },
+
+  // ==========================
+  // Logout
+  // ==========================
   logout: (): void => {
     // Aquí es crucial que coincida. Como borras 'authToken', el login debe guardar 'authToken'.
     localStorage.removeItem('authToken');
@@ -107,15 +137,19 @@ export const authService = {
     localStorage.removeItem('isAuthenticated');
   },
 
-  // Obtener cliente actual
+  // ==========================
+  // Utilidades
+  // ==========================
   getCurrentUser: (): Client | null => {
-    const clientStr = localStorage.getItem('client');
+    const clientStr = localStorage.getItem("client");
     return clientStr ? JSON.parse(clientStr) : null;
   },
 
-  // Verificar si está autenticado
   isAuthenticated: (): boolean => {
-    return localStorage.getItem('isAuthenticated') === 'true' || !!localStorage.getItem('token');
+    return (
+      localStorage.getItem("isAuthenticated") === "true" ||
+      !!localStorage.getItem("token")
+    );
   },
 
   // Solicitar recuperación de contraseña
@@ -132,7 +166,7 @@ export const authService = {
 
   // Verificar token (si tienes endpoint para esto)
   verifyToken: async (): Promise<Client> => {
-    const response = await apiClient.get('/auth/verify');
+    const response = await apiClient.get("/auth/verify");
     return response.data;
-  }
+  },
 };
