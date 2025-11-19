@@ -42,7 +42,7 @@ const ProductsPage: React.FC = () => {
         ];
         setCategories(uniqueCategories);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        // 
+        // eslint
       } catch (err) {
         setError("Error al cargar los productos.");
       } finally {
