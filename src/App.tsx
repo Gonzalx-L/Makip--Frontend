@@ -35,6 +35,7 @@ import ProductForm from "./pages/Admin/ProductForm";
 import OrdersPage from "./pages/Admin/OrdersPage";
 import OrderDetailPage from "./pages/Admin/OrderDetailPage";
 import ClientsPage from "./pages/Admin/ClientsPage";
+import ReportesPage from "./pages/Admin/ReportesPage";
 
 // --- Componentes de Admin ---
 import AdminLayout from "./components/admin/AdminLayout";
@@ -53,7 +54,6 @@ function App() {
       <AdminAuthProvider>
         <BrowserRouter>
           <ScrollToTop />
-
           <Routes>
             {/* ---------- GRUPO 1: Rutas Públicas (CON Header/Footer) ---------- */}
             <Route element={<PublicLayoutWrapper />}>
@@ -61,6 +61,7 @@ function App() {
               <Route path='/productos' element={<ProductsPage />} />
               <Route path='/productos/:id' element={<ProductDetailPage />} />
               <Route path='/tracking/:orderId' element={<TrackingPage />} />
+              <Route path='/tracking' element={<TrackingPage />} />
               <Route path='/nosotros' element={<AboutPage />} />
               <Route path='/contacto' element={<ContactPage />} />
               <Route path='/cart' element={<CartPage />} />
@@ -111,6 +112,8 @@ function App() {
 
                 {/* Clientes */}
                 <Route path='/admin/clientes' element={<ClientsPage />} />
+                {/* Reportes */}
+                <Route path='/admin/reportes' element={<ReportesPage />} />
               </Route>
             </Route>
           </Routes>

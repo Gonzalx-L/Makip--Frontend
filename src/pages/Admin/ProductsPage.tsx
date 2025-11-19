@@ -1,5 +1,3 @@
-// src/pages/Admin/ProductsPage.tsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import apiClient from "../../services/admi/apiClient";
 import {
@@ -24,48 +22,35 @@ interface Product {
   description: string;
 }
 
-// El nombre del componente puede ser cualquiera; App.tsx lo importa como default
 const ProductsPage: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
-
   const navigate = useNavigate();
 
-  //-------------------------------------------------------
-  // Cargar productos
-  //-------------------------------------------------------
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
         const response = await apiClient.get<Product[]>("/products");
         setAllProducts(response.data);
-
-        // Extraer categorías únicas
         const uniqueCategories = [
           ...new Set(response.data.map((p) => p.category_name)),
         ];
         setCategories(uniqueCategories);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
-        console.error("Error al cargar productos:", err);
         setError("Error al cargar los productos.");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
 
-  //-------------------------------------------------------
-  // Filtrado con useMemo
-  //-------------------------------------------------------
   const filteredProducts = useMemo(() => {
     return allProducts
       .filter((product) =>
@@ -78,36 +63,26 @@ const ProductsPage: React.FC = () => {
       );
   }, [allProducts, searchTerm, selectedCategory]);
 
-  //-------------------------------------------------------
-  // Editar
-  //-------------------------------------------------------
   const handleEdit = (product: Product) => {
     navigate(`/admin/productos/editar/${product.product_id}`, {
       state: { product },
     });
   };
 
-  //-------------------------------------------------------
-  // Eliminar / desactivar
-  //-------------------------------------------------------
   const handleDelete = async (id: number) => {
     const confirmDelete = window.confirm(
       "¿Estás seguro de que quieres desactivar este producto? (Esto lo ocultará de la tienda)"
     );
     if (!confirmDelete) return;
-
     try {
-      // Backend: DELETE (que probablemente hace un UPDATE is_active = false)
       await apiClient.delete(`/products/${id}`);
-
-      // Actualiza el estado local
       setAllProducts((prevProducts) =>
         prevProducts.map((p) =>
           p.product_id === id ? { ...p, is_active: false } : p
         )
       );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      console.error("Error al desactivar producto:", err);
       setError("Error al desactivar el producto.");
     }
   };
@@ -116,9 +91,6 @@ const ProductsPage: React.FC = () => {
     navigate("/admin/productos/nuevo");
   };
 
-  //-------------------------------------------------------
-  // Loading / Error
-  //-------------------------------------------------------
   if (isLoading) {
     return (
       <div className='p-10 flex justify-center'>
@@ -136,9 +108,6 @@ const ProductsPage: React.FC = () => {
     );
   }
 
-  //-------------------------------------------------------
-  // UI
-  //-------------------------------------------------------
   return (
     <div className='p-6 md:p-8 lg:p-10'>
       {/* Header */}
@@ -156,7 +125,6 @@ const ProductsPage: React.FC = () => {
 
       {/* Filtros */}
       <div className='mb-4 grid grid-cols-1 md:grid-cols-2 gap-4'>
-        {/* Filtro por Nombre */}
         <div className='relative'>
           <label htmlFor='search-product' className='sr-only'>
             Buscar producto
@@ -171,8 +139,6 @@ const ProductsPage: React.FC = () => {
           />
           <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
         </div>
-
-        {/* Filtro por Categoría */}
         <div>
           <label htmlFor='search-category' className='sr-only'>
             Filtrar por categoría
@@ -191,26 +157,25 @@ const ProductsPage: React.FC = () => {
           </select>
         </div>
       </div>
-
       {/* Tabla */}
       <div className='rounded-lg border border-gray-200 bg-white shadow-sm'>
         <div className='overflow-x-auto'>
           <table className='min-w-full divide-y divide-gray-200'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
                   Nombre
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='hidden sm:table-cell px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
                   Categoría
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                  Precio Base
+                <th className='px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                  Precio
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                <th className='hidden md:table-cell px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
                   Estado
                 </th>
-                <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase'>
+                <th className='px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase'>
                   Acciones
                 </th>
               </tr>
@@ -219,16 +184,34 @@ const ProductsPage: React.FC = () => {
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((product) => (
                   <tr key={product.product_id}>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
-                      {product.name}
+                    <td className='px-3 md:px-6 py-4 text-sm font-medium text-gray-900'>
+                      <div className="truncate max-w-[150px] md:max-w-none">
+                        {product.name}
+                      </div>
+                      {/* Mobile: Show category below name */}
+                      <div className="sm:hidden text-xs text-gray-500 mt-1">
+                        {product.category_name}
+                      </div>
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
+                    <td className='hidden sm:table-cell px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
                       {product.category_name}
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
-                      S/ {parseFloat(product.base_price).toFixed(2)}
+                    <td className='px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
+                      <div>S/ {parseFloat(product.base_price).toFixed(2)}</div>
+                      {/* Mobile: Show status below price */}
+                      <div className="md:hidden mt-1">
+                        {product.is_active ? (
+                          <span className='inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800'>
+                            Activo
+                          </span>
+                        ) : (
+                          <span className='inline-flex rounded-full bg-gray-200 px-2 py-1 text-xs font-semibold text-gray-700'>
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm'>
+                    <td className='hidden md:table-cell px-3 md:px-6 py-4 whitespace-nowrap text-sm'>
                       {product.is_active ? (
                         <span className='inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800'>
                           Activo
@@ -239,17 +222,23 @@ const ProductsPage: React.FC = () => {
                         </span>
                       )}
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4'>
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className='text-blue-600 hover:text-blue-800'>
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.product_id)}
-                        className='text-red-600 hover:text-red-800'>
-                        <Trash2 size={18} />
-                      </button>
+                    <td className='px-3 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
+                      <div className="flex justify-end space-x-2 md:space-x-4">
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className='text-blue-600 hover:text-blue-800 p-1'
+                          aria-label="Editar producto"
+                        >
+                          <Edit size={16} className="md:w-[18px] md:h-[18px]" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.product_id)}
+                          className='text-red-600 hover:text-red-800 p-1'
+                          aria-label="Eliminar producto"
+                        >
+                          <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -257,7 +246,7 @@ const ProductsPage: React.FC = () => {
                 <tr>
                   <td
                     colSpan={5}
-                    className='px-6 py-4 text-center text-sm text-gray-500'>
+                    className='px-3 md:px-6 py-8 text-center text-sm text-gray-500'>
                     No se encontraron productos que coincidan con la búsqueda.
                   </td>
                 </tr>

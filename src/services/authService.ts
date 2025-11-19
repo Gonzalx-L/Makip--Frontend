@@ -53,9 +53,10 @@ export const authService = {
     const response = await apiClient.post('/auth/login', credentials);
     const { client, token } = response.data;
     
-    // Guardar token en localStorage
-    if (token) localStorage.setItem('token', token);
+    // Guardar token en localStorage (usar 'authToken' para consistencia)
+    if (token) localStorage.setItem('authToken', token);
     localStorage.setItem('client', JSON.stringify(client));
+    localStorage.setItem('isAuthenticated', 'true');
     
     return response.data;
   },
@@ -65,16 +66,17 @@ export const authService = {
     const response = await apiClient.post('/auth/register', userData);
     const { client, token } = response.data;
     
-    // Guardar token en localStorage
-    if (token) localStorage.setItem('token', token);
+    // Guardar token en localStorage (usar 'authToken' para consistencia)
+    if (token) localStorage.setItem('authToken', token);
     localStorage.setItem('client', JSON.stringify(client));
+    localStorage.setItem('isAuthenticated', 'true');
     
     return response.data;
   },
 
   // Cerrar sesión
   logout: (): void => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('client');
     localStorage.removeItem('isAuthenticated');
   },
@@ -87,7 +89,7 @@ export const authService = {
 
   // Verificar si está autenticado
   isAuthenticated: (): boolean => {
-    return localStorage.getItem('isAuthenticated') === 'true' || !!localStorage.getItem('token');
+    return localStorage.getItem('isAuthenticated') === 'true' || !!localStorage.getItem('authToken');
   },
 
   // Verificar token (si tienes endpoint para esto)

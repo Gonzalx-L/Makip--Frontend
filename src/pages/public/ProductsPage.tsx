@@ -1,27 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProductList } from '../../components/features/products/ProductList';
 import bannerImage from '../../assets/banner1.jpg';
+import { productService } from '../../services/productService';
 
 const ProductsPage: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState(500);
-  const [selectedCategory, setSelectedCategory] = useState('Todas'); 
+  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [categories, setCategories] = useState<string[]>(['Todas']);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const products = await productService.getAll();
+        const uniqueCategories: string[] = [
+          'Todas',
+          ...new Set(products.filter(p => p.category_name).map(p => p.category_name!))
+        ];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        // En caso de error, usar categorías por defecto
+        setCategories(['Todas', 'Camisetas', 'Accesorios', 'Tazas', 'Tejidos']);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
     <div className="bg-gray-100 min-h-screen">
       
       {/* --- BANNER PLACEHOLDER --- */}
-      <div className="w-full h-64 bg-gray-300 flex items-center justify-center">
+      <div className="w-full h-48 md:h-64 bg-gray-300 flex items-center justify-center overflow-hidden">
           <img src={bannerImage} 
           alt="Banner de Productos" 
-          className="w-full h-64 object-fit group-hover:scale-105 transition-transform duration-300" 
+          className="w-full h-full object-fit hover:scale-105 transition-transform duration-300" 
           />
       </div>
 
       {/* --- CONTENIDO DE LA PÁGINA --- */}
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-8 md:py-12 px-4 sm:px-6 lg:px-8">
         
         {/* Título */}
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6 md:mb-8 text-center md:text-left">
           Nuestros Productos
         </h1>
 
@@ -68,11 +89,11 @@ const ProductsPage: React.FC = () => {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              <option>Todas</option>
-              <option>Camisetas</option>
-              <option>Accesorios</option>
-              <option>Tazas</option>
-              <option>Tejidos</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -83,7 +104,7 @@ const ProductsPage: React.FC = () => {
                 setMaxPrice(500);
                 setSelectedCategory('Todas');
               }}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm"
+              className="w-full md:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm font-medium"
             >
               Limpiar Filtros
             </button>

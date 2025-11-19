@@ -24,9 +24,9 @@ interface PersonalizationMetadata {
   coords_x: number | "";
   coords_y: number | "";
   max_width: number | "";
+  allows_image: boolean;
 }
 
-// Variantes
 interface VariantOption {
   id: string;
   value: string;
@@ -34,8 +34,8 @@ interface VariantOption {
 
 interface VariantGroup {
   id: string;
-  name: string; // ej: "Talla"
-  options: VariantOption[]; // ej: [{id: '1', value: 'S'}, ...]
+  name: string;
+  options: VariantOption[];
 }
 
 interface ProductFormData {
@@ -54,34 +54,28 @@ interface ErrorResponse {
   message?: string;
 }
 
-// Tipo de producto que viene del backend / location.state
 type ProductFromAPI = Partial<ProductFormData> & {
   personalization_metadata?: Partial<PersonalizationMetadata>;
-  variants?: unknown; // luego lo parseamos
+  variants?: unknown;
 };
 
-// State del location
 type ProductLocationState = {
   product?: ProductFromAPI;
 };
 
-// --- Funciones de ayuda ---
-
-// Transforma el JSON de la BD a nuestro estado de React
+// ==============================
+// Helpers
+// ==============================
 const parseVariantsFromDB = (dbVariants: unknown): VariantGroup[] => {
   if (!dbVariants || typeof dbVariants !== "object") return [];
-
   const variantsObj = dbVariants as Record<string, unknown>;
-
   return Object.keys(variantsObj).map((groupName, index) => {
     const rawOptions = variantsObj[groupName];
-
     const optionsArray = Array.isArray(rawOptions)
       ? (rawOptions as unknown[]).filter(
           (v): v is string => typeof v === "string"
         )
       : [];
-
     return {
       id: `group-${index}-${Date.now()}`,
       name: groupName,
@@ -93,7 +87,6 @@ const parseVariantsFromDB = (dbVariants: unknown): VariantGroup[] => {
   });
 };
 
-// Transforma nuestro estado de React al JSON que la BD espera
 const serializeVariantsForDB = (
   variants: VariantGroup[]
 ): Record<string, string[]> => {
@@ -101,26 +94,23 @@ const serializeVariantsForDB = (
   variants.forEach((group) => {
     const trimmedName = group.name.trim();
     if (!trimmedName) return;
-
     const options = group.options
       .map((opt) => opt.value.trim())
       .filter((val) => val.length > 0);
-
-    if (options.length > 0) {
-      dbJson[trimmedName] = options;
-    }
+    if (options.length > 0) dbJson[trimmedName] = options;
   });
   return dbJson;
 };
 
+// ==============================
+// Componente principal
+// ==============================
 const ProductForm: React.FC = () => {
   const { id } = useParams();
-  const location = useLocation(); // sin genérico para evitar TS2558
+  const location = useLocation();
   const navigate = useNavigate();
+  const isEditMode = Boolean(id);
 
-  //-------------------------------------------------------
-  // ESTADOS
-  //-------------------------------------------------------
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     description: "",
@@ -133,6 +123,7 @@ const ProductForm: React.FC = () => {
       coords_x: "",
       coords_y: "",
       max_width: "",
+      allows_image: false,
     },
     variants: [],
   });
@@ -143,28 +134,32 @@ const ProductForm: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
-  const isEditMode = Boolean(id);
-
+  // ==============================
+  // Cargar categorías
+  // ==============================
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await apiClient.get<Category[]>("/categories");
-      setCategories(response.data);
+      const res = await apiClient.get<Category[]>("/categories");
+      setCategories(res.data);
     } catch {
       setError("Error al cargar categorías.");
     }
   }, []);
 
-  //-------------------------------------------------------
+  // ==============================
   // Cargar datos iniciales
-  //-------------------------------------------------------
+  // ==============================
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       await fetchCategories();
+
+      const state = location.state as ProductLocationState | null;
 
       const fillForm = (product: ProductFromAPI) => {
         setFormData({
@@ -180,22 +175,19 @@ const ProductForm: React.FC = () => {
             coords_x: product.personalization_metadata?.coords_x ?? "",
             coords_y: product.personalization_metadata?.coords_y ?? "",
             max_width: product.personalization_metadata?.max_width ?? "",
+            allows_image: product.personalization_metadata?.allows_image ?? false,
           },
           variants: parseVariantsFromDB(product.variants),
         });
       };
-
-      const state = location.state as ProductLocationState | null;
 
       if (isEditMode) {
         if (state?.product) {
           fillForm(state.product);
         } else {
           try {
-            const response = await apiClient.get<ProductFromAPI>(
-              `/products/${id}`
-            );
-            fillForm(response.data);
+            const res = await apiClient.get<ProductFromAPI>(`/products/${id}`);
+            fillForm(res.data);
           } catch {
             setError("Error al cargar el producto.");
           }
@@ -208,9 +200,100 @@ const ProductForm: React.FC = () => {
     load();
   }, [id, isEditMode, location.state, fetchCategories]);
 
-  //-------------------------------------------------------
-  // Manejadores de Variantes
-  //-------------------------------------------------------
+  // ==============================
+  // Handlers
+  // ==============================
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+
+    // Personalization
+    if (name.startsWith("personalization_")) {
+      const field = name.split("_")[1];
+      
+      if (field === "image") {
+        // Handle checkbox for allows_image
+        setFormData((prev) => ({
+          ...prev,
+          personalization_metadata: {
+            ...prev.personalization_metadata,
+            allows_image: (e.target as HTMLInputElement).checked,
+          },
+        }));
+        return;
+      }
+      
+      const map: Record<string, keyof PersonalizationMetadata> = {
+        x: "coords_x",
+        y: "coords_y",
+        width: "max_width",
+      };
+
+      setFormData((prev) => ({
+        ...prev,
+        personalization_metadata: {
+          ...prev.personalization_metadata,
+          [map[field]]: value === "" ? "" : Number(value),
+        },
+      }));
+      return;
+    }
+
+    if (type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
+      return;
+    }
+
+    if (type === "number" || name === "category_id") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value === "" ? "" : Number(value),
+      }));
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    setUploadError(null);
+
+    const fd = new FormData();
+    fd.append("file", file);
+
+    try {
+      const res = await apiClient.post<{ imageUrl: string }>(
+        "/upload/product-image",
+        fd,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      setFormData((prev) => ({
+        ...prev,
+        base_image_url: res.data.imageUrl,
+      }));
+    } catch (err) {
+      let msg = "Error al subir la imagen.";
+      if (axios.isAxiosError(err) && err.response) {
+        msg =
+          (err.response.data as ErrorResponse)?.message ||
+          `Error: ${err.response.status}`;
+      }
+      setUploadError(msg);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // ==============================
+  // Variantes
+  // ==============================
   const addVariantGroup = () => {
     const now = Date.now();
     setFormData((prev) => ({
@@ -226,10 +309,10 @@ const ProductForm: React.FC = () => {
     }));
   };
 
-  const removeVariantGroup = (groupId: string) => {
+  const removeVariantGroup = (id: string) => {
     setFormData((prev) => ({
       ...prev,
-      variants: prev.variants.filter((group) => group.id !== groupId),
+      variants: prev.variants.filter((v) => v.id !== id),
     }));
   };
 
@@ -260,14 +343,14 @@ const ProductForm: React.FC = () => {
     }));
   };
 
-  const removeVariantOption = (groupId: string, optionId: string) => {
+  const removeVariantOption = (groupId: string, optId: string) => {
     setFormData((prev) => ({
       ...prev,
       variants: prev.variants.map((group) =>
         group.id === groupId
           ? {
               ...group,
-              options: group.options.filter((opt) => opt.id !== optionId),
+              options: group.options.filter((o) => o.id !== optId),
             }
           : group
       ),
@@ -276,7 +359,7 @@ const ProductForm: React.FC = () => {
 
   const handleVariantOptionChange = (
     groupId: string,
-    optionId: string,
+    optId: string,
     value: string
   ) => {
     setFormData((prev) => ({
@@ -286,7 +369,7 @@ const ProductForm: React.FC = () => {
           ? {
               ...group,
               options: group.options.map((opt) =>
-                opt.id === optionId ? { ...opt, value } : opt
+                opt.id === optId ? { ...opt, value } : opt
               ),
             }
           : group
@@ -294,115 +377,34 @@ const ProductForm: React.FC = () => {
     }));
   };
 
-  //-------------------------------------------------------
-  // Manejadores generales
-  //-------------------------------------------------------
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const target = e.target;
-    const { name, value, type } = target;
-
-    // Campos de metadatos de personalización
-    if (name.startsWith("personalization_")) {
-      const field = name.split("_")[1]; // x, y, width
-      let key: keyof PersonalizationMetadata;
-
-      if (field === "width") {
-        key = "max_width";
-      } else if (field === "x") {
-        key = "coords_x";
-      } else {
-        key = "coords_y";
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        personalization_metadata: {
-          ...prev.personalization_metadata,
-          [key]: value === "" ? "" : Number(value),
-        },
-      }));
-      return;
-    }
-
-    if (type === "checkbox") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: (target as HTMLInputElement).checked,
-      }));
-      return;
-    }
-
-    if (name === "category_id" || type === "number") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value === "" ? "" : Number(value),
-      }));
-      return;
-    }
-
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploading(true);
-    setUploadError(null);
-
-    const fd = new FormData();
-    fd.append("file", file);
-
-    try {
-      const response = await apiClient.post<{ imageUrl: string }>(
-        "/upload/product-image",
-        fd,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-      setFormData((prev) => ({
-        ...prev,
-        base_image_url: response.data.imageUrl,
-      }));
-    } catch (err: unknown) {
-      console.error("Error en handleImageUpload:", err);
-      let msg = "Error al subir la imagen.";
-      if (axios.isAxiosError(err) && err.response) {
-        msg =
-          (err.response.data as ErrorResponse)?.message ||
-          `Error: ${err.response.status}`;
-      }
-      setUploadError(msg);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
+  // ==============================
+  // Guardar
+  // ==============================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
 
-    const dataToSend = {
+    const payload = {
       ...formData,
       personalization_metadata: {
         coords_x: Number(formData.personalization_metadata.coords_x) || 0,
         coords_y: Number(formData.personalization_metadata.coords_y) || 0,
         max_width: Number(formData.personalization_metadata.max_width) || 0,
+        allows_image: formData.personalization_metadata.allows_image,
       },
       variants: serializeVariantsForDB(formData.variants),
     };
 
     try {
       if (isEditMode) {
-        await apiClient.put(`/products/${id}`, dataToSend);
+        await apiClient.put(`/products/${id}`, payload);
       } else {
-        await apiClient.post("/products", dataToSend);
+        await apiClient.post(`/products`, payload);
       }
       navigate("/admin/productos");
-    } catch (err: unknown) {
-      console.error("Error en handleSubmit:", err);
-      let msg = "Error al guardar el producto.";
+    } catch (err) {
+      let msg = "Error al guardar producto.";
       if (axios.isAxiosError(err) && err.response) {
         msg =
           (err.response.data as ErrorResponse)?.message ||
@@ -417,420 +419,384 @@ const ProductForm: React.FC = () => {
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) {
-      setCategoryError("El nombre no puede estar vacío.");
+      setCategoryError("Nombre vacío.");
       return;
     }
-    setCategoryError(null);
     try {
-      const response = await apiClient.post<Category>("/categories", {
+      const res = await apiClient.post("/categories", {
         name: newCategoryName,
       });
       await fetchCategories();
-      setIsCategoryModalOpen(false);
-      setNewCategoryName("");
       setFormData((prev) => ({
         ...prev,
-        category_id: response.data.category_id,
+        category_id: res.data.category_id,
       }));
-    } catch (err: unknown) {
-      console.error("Error en handleCreateCategory:", err);
-      let msg = "Error al crear la categoría.";
-      if (axios.isAxiosError(err) && err.response) {
-        msg =
-          (err.response.data as ErrorResponse)?.message ||
-          `Error: ${err.response.status}`;
-      }
-      setCategoryError(msg);
+      setNewCategoryName("");
+      setIsCategoryModalOpen(false);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      setCategoryError("Error al crear categoría.");
     }
   };
 
-  //-------------------------------------------------------
-  // Loading o Error
-  //-------------------------------------------------------
-  if (isLoading) {
+  // ==============================
+  // Loading
+  // ==============================
+  if (isLoading)
     return (
       <div className='p-10 flex justify-center'>
         <Loader2 className='h-12 w-12 animate-spin text-blue-600' />
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className='p-10 flex flex-col items-center'>
         <AlertCircle className='h-12 w-12 text-red-500' />
         <p className='text-red-600 mt-2'>{error}</p>
       </div>
     );
-  }
 
-  //-------------------------------------------------------
-  // FORMULARIO
-  //-------------------------------------------------------
+  // ==============================
+  // UI
+  // ==============================
   return (
     <>
       <div className='p-6 md:p-8 lg:p-10'>
-        <h1 className='text-3xl font-bold text-gray-900 mb-6'>
+        <h1 className='text-3xl font-bold mb-6'>
           {isEditMode ? "Editar Producto" : "Crear Producto"}
         </h1>
 
         <form
           onSubmit={handleSubmit}
-          className='space-y-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
-          {/* Sección 1: Datos Básicos */}
-          <div className='grid gap-6 md:grid-cols-2'>
-            {/* Columna Izquierda */}
+          className='space-y-8 border bg-white p-6 rounded-lg shadow-sm'>
+          {/* ==================== */}
+          {/* DATOS BÁSICOS */}
+          {/* ==================== */}
+          <div className='grid gap-8 md:grid-cols-2'>
+            {/* IZQUIERDA */}
             <div className='space-y-6'>
               <div>
-                <label
-                  htmlFor='name'
-                  className='block text-sm font-medium text-gray-700'>
-                  Nombre
-                </label>
+                <label className='font-medium text-sm'>Nombre</label>
                 <input
                   type='text'
-                  id='name'
                   name='name'
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                  className='mt-1 w-full border rounded-md p-2 shadow-sm'
                 />
               </div>
+
               <div>
-                <label
-                  htmlFor='description'
-                  className='block text-sm font-medium text-gray-700'>
-                  Descripción
-                </label>
+                <label className='font-medium text-sm'>Descripción</label>
                 <textarea
-                  id='description'
                   name='description'
                   value={formData.description}
                   onChange={handleChange}
                   rows={4}
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                  className='mt-1 w-full border rounded-md p-2 shadow-sm'
                 />
               </div>
+
               <div>
-                <label
-                  htmlFor='category_id'
-                  className='block text-sm font-medium text-gray-700'>
-                  Categoría
-                </label>
-                <div className='mt-1 flex gap-2'>
+                <label className='font-medium text-sm'>Categoría</label>
+                <div className='flex gap-2 mt-1'>
                   <select
-                    id='category_id'
                     name='category_id'
                     value={formData.category_id}
                     onChange={handleChange}
-                    required
-                    className='block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'>
+                    className='flex-1 border rounded-md p-2 shadow-sm'>
                     <option value=''>Selecciona una categoría</option>
-                    {categories.map((cat) => (
-                      <option key={cat.category_id} value={cat.category_id}>
-                        {cat.name}
+                    {categories.map((c) => (
+                      <option key={c.category_id} value={c.category_id}>
+                        {c.name}
                       </option>
                     ))}
                   </select>
+
                   <button
                     type='button'
-                    onClick={() => setIsCategoryModalOpen(true)}
-                    className='inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50'>
-                    <Plus className='h-4 w-4 mr-1' /> Nueva
+                    className='border rounded-md px-3 py-2 hover:bg-gray-100'
+                    onClick={() => setIsCategoryModalOpen(true)}>
+                    <Plus size={16} />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Columna Derecha */}
+            {/* DERECHA */}
             <div className='space-y-6'>
               <div className='grid grid-cols-2 gap-4'>
                 <div>
-                  <label
-                    htmlFor='base_price'
-                    className='block text-sm font-medium text-gray-700'>
-                    Precio base (S/)
+                  <label className='font-medium text-sm'>
+                    Precio Base (S/)
                   </label>
                   <input
                     type='number'
-                    id='base_price'
                     name='base_price'
                     value={formData.base_price}
                     onChange={handleChange}
-                    min={0}
-                    step='0.01'
                     required
-                    className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                    min={0}
+                    className='w-full border rounded-md p-2 shadow-sm'
                   />
                 </div>
+
                 <div>
-                  <label
-                    htmlFor='min_order_quantity'
-                    className='block text-sm font-medium text-gray-700'>
-                    Cantidad mínima
-                  </label>
+                  <label className='font-medium text-sm'>Cantidad mínima</label>
                   <input
                     type='number'
-                    id='min_order_quantity'
                     name='min_order_quantity'
                     value={formData.min_order_quantity}
                     onChange={handleChange}
-                    min={1}
                     required
-                    className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                    min={1}
+                    className='w-full border rounded-md p-2 shadow-sm'
                   />
                 </div>
               </div>
+
               <div className='flex items-center gap-2'>
                 <input
-                  id='is_active'
                   type='checkbox'
                   name='is_active'
                   checked={formData.is_active}
                   onChange={handleChange}
-                  className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
                 />
-                <label
-                  htmlFor='is_active'
-                  className='text-sm font-medium text-gray-700'>
-                  Producto activo
-                </label>
+                <span className='text-sm'>Producto activo</span>
               </div>
+
+              {/* Imagen */}
               <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                <label className='block font-medium text-sm mb-1'>
                   Imagen principal
                 </label>
+
                 {formData.base_image_url && (
-                  <div className='mb-3'>
-                    <img
-                      src={formData.base_image_url}
-                      alt='Producto'
-                      className='h-32 w-32 rounded-md object-cover border'
-                    />
-                  </div>
+                  <img
+                    src={formData.base_image_url}
+                    className='h-32 w-32 rounded-md border object-cover mb-3'
+                  />
                 )}
-                <label className='inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 cursor-pointer'>
-                  <UploadCloud className='h-4 w-4 mr-2' />
+
+                <label className='cursor-pointer inline-flex items-center border px-3 py-2 rounded-md bg-white hover:bg-gray-50 shadow-sm'>
+                  <UploadCloud size={16} className='mr-2' />
                   {isUploading ? "Subiendo..." : "Subir imagen"}
                   <input
                     type='file'
-                    accept='image/*'
                     className='hidden'
                     onChange={handleImageUpload}
-                    disabled={isUploading}
+                    accept='image/*'
                   />
                 </label>
+
                 {uploadError && (
-                  <p className='mt-2 text-sm text-red-600'>{uploadError}</p>
+                  <p className='text-sm text-red-600 mt-2'>{uploadError}</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Metadatos de Personalización */}
-          <div className='space-y-4 pt-6 border-t border-gray-200'>
-            <h3 className='text-lg font-medium text-gray-900'>
+          {/* ==================== */}
+          {/* METADATOS */}
+          {/* ==================== */}
+          <div className='pt-6 border-t space-y-4'>
+            <h3 className='font-semibold text-lg'>
               Metadatos de Personalización
             </h3>
-            <p className='text-sm text-gray-500'>
-              Define dónde se estampará el logo en el mockup (en píxeles).
-            </p>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+
+            <div className='grid md:grid-cols-3 gap-4'>
               <div>
-                <label
-                  htmlFor='personalization_x'
-                  className='block text-sm font-medium text-gray-700'>
-                  Coordenada X (px)
-                </label>
+                <label className='text-sm font-medium'>Coordenada X</label>
                 <input
                   type='number'
-                  id='personalization_x'
                   name='personalization_x'
                   value={formData.personalization_metadata.coords_x}
                   onChange={handleChange}
-                  placeholder='0'
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                  className='border rounded-md p-2 w-full'
                 />
               </div>
+
               <div>
-                <label
-                  htmlFor='personalization_y'
-                  className='block text-sm font-medium text-gray-700'>
-                  Coordenada Y (px)
-                </label>
+                <label className='text-sm font-medium'>Coordenada Y</label>
                 <input
                   type='number'
-                  id='personalization_y'
                   name='personalization_y'
                   value={formData.personalization_metadata.coords_y}
                   onChange={handleChange}
-                  placeholder='0'
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                  className='border rounded-md p-2 w-full'
                 />
               </div>
+
               <div>
-                <label
-                  htmlFor='personalization_width'
-                  className='block text-sm font-medium text-gray-700'>
-                  Ancho Máximo (px)
-                </label>
+                <label className='text-sm font-medium'>Ancho Máximo</label>
                 <input
                   type='number'
-                  id='personalization_width'
                   name='personalization_width'
                   value={formData.personalization_metadata.max_width}
                   onChange={handleChange}
-                  placeholder='100'
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                  className='border rounded-md p-2 w-full'
                 />
               </div>
             </div>
+
+            <div className='flex items-center space-x-3 mt-4'>
+              <input
+                type='checkbox'
+                id='allows_image'
+                name='personalization_image'
+                checked={formData.personalization_metadata.allows_image}
+                onChange={handleChange}
+                className='h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+              />
+              <label htmlFor='allows_image' className='text-sm font-medium text-gray-700'>
+                Permitir subir imagen personalizada
+              </label>
+            </div>
           </div>
 
-          {/* Variantes */}
-          <div className='space-y-4 pt-6 border-t border-gray-200'>
-            <div className='flex items-center justify-between'>
+          {/* ==================== */}
+          {/* VARIANTES */}
+          {/* ==================== */}
+          <div className='pt-6 border-t space-y-4'>
+            <div className='flex justify-between items-center'>
               <div>
-                <h3 className='text-lg font-medium text-gray-900'>
-                  Variantes (Tallas, Colores)
-                </h3>
+                <h3 className='text-lg font-medium'>Variantes</h3>
                 <p className='text-sm text-gray-500'>
-                  Añade grupos de opciones como Talla, Color, etc.
+                  Ejemplo: Tallas, Colores, Materiales.
                 </p>
               </div>
+
               <button
                 type='button'
                 onClick={addVariantGroup}
-                className='flex items-center space-x-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'>
-                <Plus size={16} />
-                <span>Añadir Grupo</span>
+                className='px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 text-sm font-medium'>
+                <Plus size={16} className='inline mr-1' />
+                Añadir Grupo
               </button>
             </div>
 
-            <div className='space-y-4'>
-              {formData.variants.map((group, groupIndex) => (
-                <div
-                  key={group.id}
-                  className='rounded-md border bg-gray-50 p-4 space-y-3'>
-                  <div className='flex items-center gap-4'>
-                    <label className='block text-sm font-medium text-gray-700'>
-                      Nombre del Grupo
-                    </label>
+            {formData.variants.map((group) => (
+              <div
+                key={group.id}
+                className='border rounded-md p-4 bg-gray-50 space-y-3'>
+                <div className='flex items-center gap-4'>
+                  <input
+                    type='text'
+                    value={group.name}
+                    placeholder='Ej: Talla'
+                    onChange={(e) =>
+                      handleVariantGroupNameChange(group.id, e.target.value)
+                    }
+                    className='border w-full max-w-xs rounded-md p-2'
+                  />
+                  <button
+                    type='button'
+                    onClick={() => removeVariantGroup(group.id)}
+                    className='text-red-600 hover:text-red-800'>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+
+                {/* Opciones */}
+                {group.options.map((opt) => (
+                  <div key={opt.id} className='flex items-center gap-2 pl-6'>
                     <input
                       type='text'
-                      placeholder='Ej: Talla'
-                      value={group.name}
+                      value={opt.value}
                       onChange={(e) =>
-                        handleVariantGroupNameChange(group.id, e.target.value)
+                        handleVariantOptionChange(
+                          group.id,
+                          opt.id,
+                          e.target.value
+                        )
                       }
-                      className='block w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
+                      placeholder='Ej: M'
+                      className='border rounded-md p-2 w-full max-w-xs'
                     />
+
                     <button
                       type='button'
-                      onClick={() => removeVariantGroup(group.id)}
-                      className='ml-auto text-red-500 hover:text-red-700'>
+                      disabled={group.options.length <= 1}
+                      className='text-red-600 hover:text-red-800 disabled:opacity-50'
+                      onClick={() => removeVariantOption(group.id, opt.id)}>
                       <Trash2 size={16} />
                     </button>
                   </div>
+                ))}
 
-                  <div className='space-y-2 pl-6'>
-                    {group.options.map((option, optIndex) => (
-                      <div key={option.id} className='flex items-center gap-2'>
-                        <label className='text-sm text-gray-600'>
-                          Opción {optIndex + 1}
-                        </label>
-                        <input
-                          type='text'
-                          placeholder={groupIndex === 0 ? "Ej: M" : "Ej: Rojo"}
-                          value={option.value}
-                          onChange={(e) =>
-                            handleVariantOptionChange(
-                              group.id,
-                              option.id,
-                              e.target.value
-                            )
-                          }
-                          className='block w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
-                        />
-                        <button
-                          type='button'
-                          onClick={() =>
-                            removeVariantOption(group.id, option.id)
-                          }
-                          className='text-red-500 hover:text-red-700 disabled:opacity-50'
-                          disabled={group.options.length <= 1}>
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type='button'
-                      onClick={() => addVariantOption(group.id)}
-                      className='text-sm text-blue-600 hover:text-blue-800'>
-                      + Añadir opción
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                <button
+                  type='button'
+                  onClick={() => addVariantOption(group.id)}
+                  className='text-blue-600 hover:text-blue-800 text-sm'>
+                  + Añadir opción
+                </button>
+              </div>
+            ))}
           </div>
 
-          {/* Botones */}
-          <div className='flex justify-end gap-3 pt-6 border-t border-gray-200'>
+          {/* BOTONES */}
+          <div className='pt-6 border-t flex justify-end gap-3'>
             <button
               type='button'
               onClick={() => navigate("/admin/productos")}
-              className='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50'>
+              className='px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200'>
               Cancelar
             </button>
+
             <button
               type='submit'
               disabled={isSaving || isUploading}
-              className='inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-60'>
+              className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center'>
               {isSaving ? (
                 <Loader2 className='h-5 w-5 animate-spin mr-2' />
               ) : (
                 <Save className='h-5 w-5 mr-2' />
               )}
-              {isEditMode ? "Actualizar producto" : "Guardar producto"}
+              {isEditMode ? "Actualizar" : "Guardar Producto"}
             </button>
           </div>
         </form>
       </div>
 
-      {/* Modal categoría */}
+      {/* ==================== */}
+      {/* MODAL DE CATEGORÍA */}
+      {/* ==================== */}
       {isCategoryModalOpen && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-20 p-4 backdrop-blur-sm'>
-          <div className='bg-white rounded-lg p-6 w-full max-w-md shadow-lg'>
-            <h2 className='text-lg font-semibold text-gray-900'>
-              Crear Nueva Categoría
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm'>
+          <div className='bg-white p-6 rounded-xl shadow-lg w-full max-w-md border'>
+            <h2 className='text-lg font-semibold mb-4'>
+              Crear nueva categoría
             </h2>
-            <form onSubmit={handleCreateCategory} className='mt-4 space-y-4'>
+
+            <form onSubmit={handleCreateCategory} className='space-y-4'>
               <input
                 type='text'
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                className='w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500'
-                placeholder='Nombre de la categoría'
-                autoFocus
+                placeholder='Ej: Tazas'
+                className='w-full border rounded-md p-2'
               />
+
               {categoryError && (
                 <p className='text-sm text-red-600'>{categoryError}</p>
               )}
-              <div className='flex justify-end space-x-2'>
+
+              <div className='flex justify-end gap-3'>
                 <button
                   type='button'
+                  className='px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300'
                   onClick={() => {
                     setIsCategoryModalOpen(false);
                     setCategoryError(null);
-                  }}
-                  className='px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300'>
+                  }}>
                   Cancelar
                 </button>
+
                 <button
                   type='submit'
-                  className='px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700'>
+                  className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700'>
                   Crear Categoría
                 </button>
               </div>

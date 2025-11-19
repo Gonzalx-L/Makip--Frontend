@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { CartItem } from '../types';
 
 // Define el estado y las acciones del store
@@ -12,8 +13,10 @@ interface CartState {
   getTotalPrice: () => number;
 }
 
-// --- Lógica del Store ---
-export const useCartStore = create<CartState>((set, get) => ({
+// --- Lógica del Store con Persistencia ---
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
   // Estado inicial (un carrito vacío)
   items: [],
 
@@ -80,4 +83,12 @@ export const useCartStore = create<CartState>((set, get) => ({
       return acc + unit * item.quantity;
     }, 0);
   },
-}));
+    }),
+    {
+      name: 'makip-cart-storage', // nombre único para la clave en localStorage
+      storage: createJSONStorage(() => localStorage), // usar localStorage
+      // Solo persistir los items, no las funciones
+      partialize: (state) => ({ items: state.items }),
+    }
+  )
+);

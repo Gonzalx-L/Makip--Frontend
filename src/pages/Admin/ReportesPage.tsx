@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from "react";
+// 💡 1. Corrigiendo las rutas de importación
 import apiClient from "../../services/admi/apiClient";
-import { Loader2, AlertCircle, Eye, Search, CalendarDays } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  Eye,
+  Search,
+  CalendarDays,
+  FileText,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import StatusBadge, {
   type OrderStatus,
 } from "../../components/admin/StatusBadge";
-// 💡 1. Importamos el hook desde su nuevo archivo
-// (Ajusta la ruta "../.." si es necesario según tu estructura)
 import { useDebounce } from "../../hooks/useDebounce";
 
-// --- Interface de la Orden ---
+// Interface de la Orden (devuelta por el endpoint /admin/reports)
 interface Order {
   order_id: number;
   client_name: string;
@@ -19,30 +25,32 @@ interface Order {
   created_at: string;
 }
 
-// 💡 2. ELIMINAMOS la definición de useDebounce de este archivo
-
-const OrdersPage: React.FC = () => {
+// 💡 2. Componente renombrado a ReportesPage
+const ReportesPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Estado para el loading del PDF
+  const [isPdfLoading, setIsPdfLoading] = useState<number | null>(null);
+
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
-  const [startDate, setStartDate] = useState(""); // "YYYY-MM-DD"
-  const [endDate, setEndDate] = useState(""); // "YYYY-MM-DD"
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-  // Usamos el valor "debounced" para la búsqueda
-  const debouncedSearchTerm = useDebounce(searchTerm, 500); // 500ms de espera
+  // Hook para no saturar la API con cada tecla
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Este useEffect ahora depende de los filtros
-  // y llama al endpoint de REPORTES
   useEffect(() => {
     const fetchOrders = async () => {
       setIsLoading(true);
       setError(null);
       try {
         const params = new URLSearchParams();
+
+        // 'clientName' en el backend ahora busca por ID o Nombre
         if (debouncedSearchTerm) {
           params.append("clientName", debouncedSearchTerm);
         }
@@ -53,13 +61,14 @@ const OrdersPage: React.FC = () => {
           params.append("endDate", endDate);
         }
 
+        // 💡 3. Llamada al endpoint de reportes
         const response = await apiClient.get<Order[]>(
           `/admin/reports?${params.toString()}`
         );
         setOrders(response.data);
       } catch (err) {
-        console.error("Error al cargar órdenes:", err);
-        setError("Error al cargar las órdenes.");
+        console.error("Error al cargar el reporte de órdenes:", err);
+        setError("Error al cargar los reportes.");
       } finally {
         setIsLoading(false);
       }
@@ -67,8 +76,38 @@ const OrdersPage: React.FC = () => {
     fetchOrders();
   }, [debouncedSearchTerm, startDate, endDate]);
 
+  // Navega a la página de detalle (la misma que usa "Órdenes")
   const handleViewDetails = (id: number) => {
     navigate(`/admin/ordenes/${id}`);
+  };
+
+  // 💡 4. Función para descargar y previsualizar el PDF
+  const handlePreviewPdf = async (orderId: number) => {
+    setIsPdfLoading(orderId); // Muestra el spinner en este botón
+    try {
+      // Pedimos el PDF al backend. Es crucial el 'responseType: blob'
+      const response = await apiClient.get(
+        `/admin/orders/${orderId}/pdf`, // Endpoint seguro que genera el PDF
+        {
+          responseType: "blob", // 👈 Esto le dice a axios que espere un archivo
+        }
+      );
+
+      // Creamos un Blob (archivo en memoria) con el PDF
+      const file = new Blob([response.data], { type: "application/pdf" });
+
+      // Creamos una URL temporal para ese archivo en memoria
+      const fileURL = URL.createObjectURL(file);
+
+      // Abrimos esa URL temporal en una nueva pestaña del navegador
+      window.open(fileURL, "_blank");
+    } catch (err) {
+      console.error("Error al previsualizar el PDF:", err);
+      // Actualiza el estado de error para que el usuario lo vea
+      setError(`No se pudo cargar el PDF para la orden #${orderId}.`);
+    } finally {
+      setIsPdfLoading(null); // Oculta el spinner
+    }
   };
 
   if (isLoading) {
@@ -78,29 +117,32 @@ const OrdersPage: React.FC = () => {
       </div>
     );
   }
-  if (error) {
-    return (
-      <div className='p-10 flex flex-col items-center'>
-        <AlertCircle className='h-12 w-12 text-red-500' />
-        <p className='mt-4 text-lg text-red-600'>{error}</p>
-      </div>
-    );
-  }
 
   return (
     <div className='p-6 md:p-8 lg:p-10'>
       {/* Encabezado */}
       <div className='mb-6 flex items-center justify-between'>
-        <h1 className='text-3xl font-bold text-gray-900'>Gestión de Órdenes</h1>
+        {/* 💡 5. Título de la página cambiado */}
+        <h1 className='text-3xl font-bold text-gray-900'>
+          Reportes de Órdenes
+        </h1>
       </div>
 
-      {/* Filtros */}
+      {/* Muestra un error de PDF si ocurre */}
+      {error && (
+        <div className='mb-4 p-4 bg-red-100 text-red-700 border border-red-300 rounded-md flex items-center gap-2'>
+          <AlertCircle size={20} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Filtros (exactamente como en OrdersPage) */}
       <div className='mb-4 grid grid-cols-1 md:grid-cols-3 gap-4'>
-        {/* Filtro por Cliente */}
+        {/* Filtro por Cliente/ID */}
         <div className='relative'>
           <input
             type='text'
-            placeholder='Buscar por cliente...'
+            placeholder='Buscar por Cliente o ID de Orden...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className='w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
@@ -183,7 +225,23 @@ const OrdersPage: React.FC = () => {
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium'>
                       S/ {Number(order.total_price).toFixed(2)}
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
+
+                    {/* 💡 6. Acciones (PDF y Ver Detalle) */}
+                    <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4'>
+                      {/* Botón de PDF */}
+                      <button
+                        onClick={() => handlePreviewPdf(order.order_id)}
+                        disabled={isPdfLoading === order.order_id}
+                        className='text-red-600 hover:text-red-800 flex items-center gap-1 disabled:opacity-50'>
+                        {isPdfLoading === order.order_id ? (
+                          <Loader2 size={16} className='animate-spin' />
+                        ) : (
+                          <FileText size={16} />
+                        )}
+                        Ver PDF
+                      </button>
+
+                      {/* Botón de Ver Detalles */}
                       <button
                         onClick={() => handleViewDetails(order.order_id)}
                         className='text-blue-600 hover:text-blue-800 flex items-center gap-1'>
@@ -210,4 +268,5 @@ const OrdersPage: React.FC = () => {
   );
 };
 
-export default OrdersPage;
+// 💡 7. Exporta el nuevo componente
+export default ReportesPage;

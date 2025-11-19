@@ -4,6 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { productService } from '../../services/productService';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthContext } from '../../contexts/AuthContext';
+import ImageUpload from '../../components/shared/ImageUpload';
 import type { ProductVariants, PersonalizationData, Product } from '../../types';
 
 // Datos mock para cuando no hay productos en la BD
@@ -108,6 +109,14 @@ const ProductDetailPage: React.FC = () => {
     // La validación se ejecutará cuando el usuario haga clic en "Agregar al carrito"
     // Por ahora solo observamos los cambios del ID
   }, [id]);
+
+  // Hook de efecto para establecer la cantidad mínima cuando se carga el producto
+  useEffect(() => {
+    const currentProduct = backendProduct || mockProducts.find(p => p.product_id === Number(id));
+    if (currentProduct && currentProduct.min_order_quantity) {
+      setQuantity(currentProduct.min_order_quantity);
+    }
+  }, [backendProduct, id]);
   
   // AHORA sí podemos hacer validaciones condicionales
   // Test rápido: Si no hay ID, redirigir
@@ -197,9 +206,9 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
-  // Función helper para formatear precios (convierte centavos a soles)
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Función helper para formatear precios (soles)
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
   const calculatePrice = () => {
@@ -216,6 +225,22 @@ const ProductDetailPage: React.FC = () => {
     }
     
     return totalPrice;
+  };
+
+  // Función para calcular precio por unidad (para el carrito)
+  const calculateUnitPrice = () => {
+    const basePrice = typeof product.base_price === 'number' ? product.base_price : parseFloat(product.base_price);
+    let unitPrice = basePrice;
+    
+    // Agregar costo de personalización si existe
+    if (product.personalization_metadata?.cost && Object.keys(personalization).length > 0) {
+      const personalizationCost = typeof product.personalization_metadata.cost === 'number' 
+        ? product.personalization_metadata.cost 
+        : parseFloat(product.personalization_metadata.cost);
+      unitPrice += personalizationCost;
+    }
+    
+    return unitPrice;
   };
 
   const validateRequiredFields = () => {
@@ -280,7 +305,7 @@ const ProductDetailPage: React.FC = () => {
       quantity,
       selectedVariants,
       personalization,
-      calculated_price: calculatePrice()
+      calculated_price: calculateUnitPrice()
     };
 
     addToCart(cartItem);
@@ -292,38 +317,38 @@ const ProductDetailPage: React.FC = () => {
   console.log('ProductDetailPage - Renderizando producto:', product.name);
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid md:grid-cols-2 gap-8">
+    <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         {/* Imagen del producto */}
-        <div>
+        <div className="order-2 lg:order-1">
           {product.base_image_url ? (
             <img
               src={product.base_image_url}
               alt={product.name}
-              className="w-full h-96 object-cover rounded-lg shadow-lg"
+              className="w-full h-64 sm:h-80 md:h-96 object-cover rounded-lg shadow-lg"
             />
           ) : (
-            <div className="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+            <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-200 rounded-lg flex items-center justify-center">
               <span className="text-gray-500">Sin imagen disponible</span>
             </div>
           )}
         </div>
 
         {/* Información del producto */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6 order-1 lg:order-2">
           <div>
-            <span className="text-sm text-blue-600 font-medium">{product.category_name}</span>
-            <h1 className="text-3xl font-bold text-gray-800 mt-1">{product.name}</h1>
-            <p className="text-gray-600 mt-4">{product.description}</p>
+            <span className="text-sm text-teal-600 font-medium">{product.category_name}</span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{product.name}</h1>
+            <p className="text-gray-600 mt-3 md:mt-4 text-sm md:text-base">{product.description}</p>
           </div>
 
           {/* Precio */}
-          <div>
-            <span className="text-3xl font-bold text-gray-900">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <span className="text-2xl sm:text-3xl font-bold text-gray-900">
               S/ {formatPrice(calculatePrice())}
             </span>
             {quantity > 1 && (
-              <span className="text-sm text-gray-500 ml-2">
+              <span className="text-xs sm:text-sm text-gray-500 ml-2 block sm:inline">
                 (S/ {formatPrice(typeof product.base_price === 'number' ? product.base_price : parseFloat(product.base_price))} c/u)
               </span>
             )}
@@ -341,19 +366,19 @@ const ProductDetailPage: React.FC = () => {
             
             return (
               <div key={variantKey}>
-                <label className={`block text-sm font-medium mb-2 ${hasError ? 'text-red-700' : 'text-gray-700'}`}>
-                  {spanishLabel}: <span className="text-red-500">*</span>
-                  {hasError && <span className="text-red-600 text-xs ml-1">(Requerido)</span>}
+                <label className={`block text-sm font-medium mb-2 ${hasError ? 'text-teal-700' : 'text-gray-700'}`}>
+                  {spanishLabel}: <span className="text-teal-500">*</span>
+                  {hasError && <span className="text-teal-600 text-xs ml-1">(Requerido)</span>}
                 </label>
-                <div className={`flex flex-wrap gap-2 p-2 rounded-lg ${hasError ? 'bg-red-50 border border-red-200' : ''}`}>
+                <div className={`flex flex-wrap gap-2 p-2 rounded-lg ${hasError ? 'bg-teal-50 border border-teal-200' : ''}`}>
                   {Array.isArray(values) && values.map((value) => (
                     <button
                       key={value}
                       onClick={() => handleVariantChange(variantKey, value)}
-                      className={`px-4 py-2 rounded-lg border ${
+                      className={`px-3 md:px-4 py-2 rounded-lg border text-sm md:text-base ${
                         selectedVariants[variantKey] === value
-                          ? 'bg-blue-500 text-white border-blue-500'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
+                          ? 'bg-teal-500 text-white border-teal-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-teal-300'
                       }`}
                     >
                       {value}
@@ -366,14 +391,14 @@ const ProductDetailPage: React.FC = () => {
 
           {/* Personalización */}
           {product.personalization_metadata && (
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Personalización</h3>
+            <div className="border-t pt-4 md:pt-6">
+              <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Personalización</h3>
               
               {/* Texto personalizado */}
               <div className="mb-4">
                 <label className={`block text-sm font-medium mb-2 ${validationErrors.includes('Texto personalizado') ? 'text-red-700' : 'text-gray-700'}`}>
-                  Texto personalizado: <span className="text-red-500">*</span>
-                  {validationErrors.includes('Texto personalizado') && <span className="text-red-600 text-xs ml-1">(Requerido)</span>}
+                  Texto personalizado: <span className="text-teal-500">*</span>
+                  {validationErrors.includes('Texto personalizado') && <span className="text-teal-600 text-xs ml-1">(Requerido)</span>}
                 </label>
                 <input
                   type="text"
@@ -393,6 +418,20 @@ const ProductDetailPage: React.FC = () => {
                   </p>
                 )}
               </div>
+
+              {/* Imagen personalizada */}
+              {product.personalization_metadata.allows_image && (
+                <div className="mb-4">
+                  <ImageUpload
+                    onImageUpload={(imageUrl) => handlePersonalizationChange('image_url', imageUrl)}
+                    onImageRemove={() => handlePersonalizationChange('image_url', '')}
+                    currentImageUrl={personalization.image_url || ''}
+                    label="Imagen personalizada"
+                    helpText="Sube tu logo o imagen para personalizar el producto (JPG, PNG, GIF - Máx. 5MB)"
+                    required={false}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -404,14 +443,14 @@ const ProductDetailPage: React.FC = () => {
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => setQuantity(Math.max(product.min_order_quantity, quantity - 1))}
-                className="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300"
+                className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 w-10 h-10 flex items-center justify-center"
               >
                 -
               </button>
-              <span className="text-lg font-semibold px-4">{quantity}</span>
+              <span className="text-base md:text-lg font-semibold px-3 md:px-4 min-w-12 text-center">{quantity}</span>
               <button
                 onClick={() => setQuantity(quantity + 1)}
-                className="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300"
+                className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 w-10 h-10 flex items-center justify-center"
               >
                 +
               </button>
@@ -420,11 +459,11 @@ const ProductDetailPage: React.FC = () => {
 
           {/* Mensaje de campos requeridos */}
           {validationErrors.length > 0 && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700 font-medium mb-2">
-                ⚠️ Completa los siguientes campos para continuar:
+            <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+              <p className="text-sm text-teal-700 font-medium mb-2">
+                Completa los siguientes campos para continuar:
               </p>
-              <ul className="text-sm text-red-600 list-disc list-inside space-y-1">
+              <ul className="text-sm text-teal-600 list-disc list-inside space-y-1">
                 {validationErrors.map((error, index) => (
                   <li key={index}>{error}</li>
                 ))}
@@ -435,33 +474,39 @@ const ProductDetailPage: React.FC = () => {
           {/* Botón agregar al carrito */}
           <button
             onClick={handleAddToCart}
-            className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors ${
+            className={`w-full py-3 px-4 md:px-6 rounded-lg font-semibold transition-colors text-sm md:text-base ${
               isAuthenticated
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-orange-500 text-white hover:bg-orange-600'
+                ? 'bg-teal-500 text-white hover:bg-teal-600'
+                : 'bg-teal-500 text-white hover:bg-teal-600'
             }`}
           >
             {isAuthenticated ? (
-              <>Agregar al Carrito - S/ {formatPrice(calculatePrice())}</>
+              <span className="block sm:inline">
+                <span className="block sm:inline">Agregar al Carrito</span>
+                <span className="block sm:inline sm:ml-1">- S/ {formatPrice(calculatePrice())}</span>
+              </span>
             ) : (
-              <>🔐 Inicia Sesión para Comprar - S/ {formatPrice(calculatePrice())}</>
+              <span className="block sm:inline">
+                <span className="block sm:inline">Inicia Sesión para Comprar</span>
+                <span className="block sm:inline sm:ml-1">- S/ {formatPrice(calculatePrice())}</span>
+              </span>
             )}
           </button>
 
           {!isAuthenticated && (
-            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-700 text-center">
-                ℹ️ <strong>¿No tienes cuenta?</strong> 
+            <div className="mt-3 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+              <p className="text-sm text-black text-center">
+                <strong>¿No tienes cuenta?</strong> 
                 <button 
                   onClick={() => navigate('/login')} 
-                  className="text-blue-600 hover:underline ml-1"
+                  className="text-teal-500 hover:underline ml-1"
                 >
                   Inicia sesión
                 </button> 
                 {' '}o{' '}
                 <button 
                   onClick={() => navigate('/registro')} 
-                  className="text-blue-600 hover:underline"
+                  className="text-teal-500 hover:underline"
                 >
                   regístrate
                 </button> 

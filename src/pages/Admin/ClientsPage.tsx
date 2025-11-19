@@ -1,6 +1,5 @@
-// src/pages/Admin/ClientsPage.tsx
-
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+// 💡 1. Corregido: "admin" en lugar de "admi"
 import apiClient from "../../services/admi/apiClient";
 import { Loader2, AlertCircle, User, Search, CalendarDays } from "lucide-react";
 
@@ -9,12 +8,13 @@ interface Client {
   client_id: number;
   name: string;
   email: string;
-  google_uid: string;
+  google_uid: string | null; // Google UID puede ser null
   created_at: string;
 }
 
 const ClientsPage: React.FC = () => {
-  const [allClients, setAllClients] = useState<Client[]>([]); // Lista maestra
+  // 💡 2. Este estado ahora guarda los clientes FILTRADOS por el backend
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,19 +23,34 @@ const ClientsPage: React.FC = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Filtros ACTIVOS (lo que realmente se aplica a la tabla)
+  // Filtros ACTIVOS (lo que realmente se aplica a la API)
   const [activeSearchTerm, setActiveSearchTerm] = useState("");
   const [activeStartDate, setActiveStartDate] = useState("");
   const [activeEndDate, setActiveEndDate] = useState("");
 
-  // --- Cargar Clientes ---
+  // 💡 3. useEffect ahora se ejecuta cuando los filtros ACTIVOS cambian
   useEffect(() => {
     const fetchClients = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await apiClient.get<Client[]>("/admin/clients");
-        setAllClients(response.data);
+        // Construimos los parámetros para la API
+        const params = new URLSearchParams();
+        if (activeSearchTerm) {
+          params.append("search", activeSearchTerm); // 'search' como en el backend
+        }
+        if (activeStartDate) {
+          params.append("startDate", activeStartDate);
+        }
+        if (activeEndDate) {
+          params.append("endDate", activeEndDate);
+        }
+
+        // Llamamos a la API con los filtros
+        const response = await apiClient.get<Client[]>(
+          `/admin/clients?${params.toString()}`
+        );
+        setClients(response.data); // Guardamos los clientes ya filtrados
       } catch (err) {
         console.error("Error al cargar clientes:", err);
         setError("Error al cargar los clientes.");
@@ -45,46 +60,14 @@ const ClientsPage: React.FC = () => {
     };
 
     fetchClients();
-  }, []);
+  }, [activeSearchTerm, activeStartDate, activeEndDate]); // Depende de los filtros activos
 
-  // --- Lógica de Filtrado (usa solo los filtros ACTIVOS) ---
-  const filteredClients = useMemo(() => {
-    return allClients.filter((client) => {
-      const term = activeSearchTerm.toLowerCase().trim();
-      const clientDate = new Date(client.created_at);
-
-      // Filtro por nombre / email
-      if (
-        term &&
-        !(
-          client.name.toLowerCase().includes(term) ||
-          client.email.toLowerCase().includes(term)
-        )
-      ) {
-        return false;
-      }
-
-      // Filtro "Registrado Desde"
-      if (activeStartDate) {
-        const fromDate = new Date(activeStartDate);
-        fromDate.setHours(0, 0, 0, 0);
-        if (clientDate < fromDate) return false;
-      }
-
-      // Filtro "Registrado Hasta"
-      if (activeEndDate) {
-        const toDate = new Date(activeEndDate);
-        toDate.setHours(23, 59, 59, 999);
-        if (clientDate > toDate) return false;
-      }
-
-      return true;
-    });
-  }, [allClients, activeSearchTerm, activeStartDate, activeEndDate]);
+  // 💡 4. ELIMINAMOS el 'useMemo'. Ya no es necesario.
 
   // --- Aplicar filtros al enviar el formulario ---
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Al setear estos estados, el useEffect se disparará solo
     setActiveSearchTerm(searchInput);
     setActiveStartDate(startDate);
     setActiveEndDate(endDate);
@@ -95,6 +78,7 @@ const ClientsPage: React.FC = () => {
     setSearchInput("");
     setStartDate("");
     setEndDate("");
+    // Al setear los filtros activos, el useEffect se dispara y recarga todo
     setActiveSearchTerm("");
     setActiveStartDate("");
     setActiveEndDate("");
@@ -231,8 +215,9 @@ const ClientsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className='bg-white divide-y divide-gray-200'>
-              {filteredClients.length > 0 ? (
-                filteredClients.map((client) => (
+              {/* 💡 5. Mapeamos sobre 'clients' */}
+              {clients.length > 0 ? (
+                clients.map((client) => (
                   <tr key={client.client_id}>
                     <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
                       {client.name}
@@ -241,7 +226,8 @@ const ClientsPage: React.FC = () => {
                       {client.email}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                      {client.google_uid}
+                      {/* Mostramos 'N/A' si no tienen Google ID */}
+                      {client.google_uid ? client.google_uid : "N/A"}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
                       {new Date(client.created_at).toLocaleDateString("es-ES")}

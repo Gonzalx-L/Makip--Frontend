@@ -86,7 +86,7 @@ const AboutPage: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Misión */}
             <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-6 mx-auto">
+              <div className="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center mb-6 mx-auto">
                 <i className="fas fa-bullseye text-white text-2xl"></i>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Misión</h3>
@@ -98,7 +98,7 @@ const AboutPage: React.FC = () => {
 
             {/* Visión */}
             <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6 mx-auto">
+              <div className="w-16 h-16 bg-teal-400 rounded-full flex items-center justify-center mb-6 mx-auto">
                 <i className="fas fa-eye text-white text-2xl"></i>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Visión</h3>
@@ -110,7 +110,7 @@ const AboutPage: React.FC = () => {
 
             {/* Valores */}
             <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mb-6 mx-auto">
+              <div className="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center mb-6 mx-auto">
                 <i className="fas fa-heart text-white text-2xl"></i>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Valores</h3>
@@ -125,7 +125,7 @@ const AboutPage: React.FC = () => {
 
 
       {/* Call to Action */}
-      <section className="bg-gradient-to-r from-indigo-600 to-purple-700 py-20">
+      <section className="bg-gradient-to-r from-teal-400 to-teal-400 py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
             ¿Listo para formar parte de nuestra historia?
@@ -136,13 +136,13 @@ const AboutPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               to="/productos" 
-              className="bg-white text-indigo-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-colors duration-300 transform hover:scale-105"
+              className="bg-white text-teal-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-colors duration-300 transform hover:scale-105"
             >
               Ver Productos
             </Link>
             <Link 
               to="/contacto" 
-              className="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-indigo-700 transition-all duration-300 transform hover:scale-105"
+              className="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-teal-700 transition-all duration-300 transform hover:scale-105"
             >
               Contáctanos
             </Link>

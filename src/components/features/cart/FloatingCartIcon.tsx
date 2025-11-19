@@ -14,9 +14,9 @@ export const FloatingCartIcon: React.FC = () => {
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
   const totalPriceInCents = getTotalPrice();
   
-  // Helper para convertir centavos a soles
-  const formatPrice = (priceInCents: number) => {
-    return (priceInCents / 100).toFixed(2);
+  // Helper para formatear precios (soles)
+  const formatPrice = (priceInSoles: number) => {
+    return priceInSoles.toFixed(2);
   };
 
   // 3. Si no hay items o no está autenticado, no muestra nada
@@ -28,7 +28,7 @@ export const FloatingCartIcon: React.FC = () => {
   return (
     <Link
       to="/cart" // (Esta será la futura página del carrito)
-      className="fixed bottom-25 right-4 z-50 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300"
+      className="fixed bottom-25 right-4 z-50 bg-teal-600 text-white p-4 rounded-full shadow-lg hover:bg-teal-500 transition-all duration-300"
     >
       <div className="flex items-center gap-3">
         <div className="relative">
