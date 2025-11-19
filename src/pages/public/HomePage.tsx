@@ -77,7 +77,7 @@ const HomePage: React.FC = () => {
                   Cinta sublimada personalizada con el diseño que desees.
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-teal-500">S/15.00</span>
+                  <span className="text-2xl font-bold text-teal-500">S/20.00</span>
                 </div>
               </div>
             </div>

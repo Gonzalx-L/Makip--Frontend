@@ -36,6 +36,7 @@ import OrdersPage from "./pages/Admin/OrdersPage";
 import OrderDetailPage from "./pages/Admin/OrderDetailPage";
 import ClientsPage from "./pages/Admin/ClientsPage";
 import ReportesPage from "./pages/Admin/ReportesPage";
+import ConfiguracionPage from "./pages/Admin/ConfiguracionPage";
 
 // --- Componentes de Admin ---
 import AdminLayout from "./components/admin/AdminLayout";
@@ -112,8 +113,12 @@ function App() {
 
                 {/* Clientes */}
                 <Route path='/admin/clientes' element={<ClientsPage />} />
+                
                 {/* Reportes */}
                 <Route path='/admin/reportes' element={<ReportesPage />} />
+                
+                {/* Configuración */}
+                <Route path='/admin/configuracion' element={<ConfiguracionPage />} />
               </Route>
             </Route>
           </Routes>
