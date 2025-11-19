@@ -1,5 +1,7 @@
 // Exportar componentes de autenticación
-// TODO: Descomentar cuando se creen los componentes
-// export { default as LoginForm } from './LoginForm';
-// export { default as RegisterForm } from './RegisterForm';
-// export { default as ForgotPasswordForm } from './ForgotPasswordForm';
+export { UserLoginForm } from './UserLoginForm';
+export { TraditionalLoginForm } from './TraditionalLoginForm';
+export { TraditionalRegisterForm } from './TraditionalRegisterForm';
+export { ForgotPasswordForm } from './ForgotPasswordForm';
+export { HybridAuthForm } from './HybridAuthForm';
+export { GoogleLoginButton } from './GoogleLoginButton';

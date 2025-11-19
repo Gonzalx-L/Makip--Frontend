@@ -60,9 +60,15 @@ export interface CreateOrderResponse {
 }
 
 export const orderService = {
-  // Crear nueva orden (ruta pública para clientes no autenticados)
+  // Crear nueva orden (ruta autenticada para clientes registrados)
   createOrder: async (orderData: CreateOrderRequest): Promise<CreateOrderResponse> => {
     const response = await apiClient.post<CreateOrderResponse>('/orders', orderData);
+    return response.data;
+  },
+
+  // Crear nueva orden pública (sin autenticación para clientes invitados)
+  createPublicOrder: async (orderData: CreateOrderRequest): Promise<CreateOrderResponse> => {
+    const response = await apiClient.post<CreateOrderResponse>('/public/orders', orderData);
     return response.data;
   },
 
@@ -71,7 +77,7 @@ export const orderService = {
     const response = await apiClient.get<Order>(`/orders/${orderId}`);
     return response.data;
   },
-
+  // Obtener 
   // Obtener órdenes del cliente autenticado
   getMyOrders: async (): Promise<Order[]> => {
     const response = await apiClient.get<Order[]>('/orders/my-orders');
