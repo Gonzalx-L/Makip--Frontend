@@ -9,7 +9,7 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  phone: string; // Requerido en backend
+  phone: string;
   dni?: string;
 }
 
@@ -24,13 +24,13 @@ export interface ResetPasswordRequest {
 
 export interface Client {
   client_id: number;
-  google_uid?: string | null; // Opcional para usuarios tradicionales
+  google_uid?: string | null;
   email: string;
   name: string;
   phone?: string;
   dni?: string;
   address?: string;
-  password_hash?: string; // No se expone al frontend, pero puede venir
+  password_hash?: string;
   created_at: string;
   updated_at: string;
 }
@@ -60,10 +60,11 @@ export const authService = {
   // Autenticación con Google
   loginWithGoogle: async (googleToken: string): Promise<GoogleAuthResponse> => {
     const response = await apiClient.post('/auth/google', { token: googleToken });
+    // Huber usaba 'token' aquí, lo cambiamos a 'jwtToken' para evitar conflicto de nombres
+    // y lo guardamos como 'authToken' para mantener consistencia con tu app.
     const { client, token: jwtToken, isNewUser } = response.data;
     
-    // Guardar token JWT y datos del cliente en localStorage
-    if (jwtToken) localStorage.setItem('token', jwtToken);
+    if (jwtToken) localStorage.setItem('authToken', jwtToken); // CORREGIDO: Usamos 'authToken'
     localStorage.setItem('client', JSON.stringify(client));
     localStorage.setItem('isAuthenticated', 'true');
     
@@ -75,8 +76,9 @@ export const authService = {
     const response = await apiClient.post('/auth/login', credentials);
     const { client, token, isNewUser } = response.data;
     
-    // Guardar token JWT y datos del cliente en localStorage
-    if (token) localStorage.setItem('token', token);
+    // RESUELTO EL CONFLICTO: Usamos 'authToken'
+    if (token) localStorage.setItem('authToken', token);
+    
     localStorage.setItem('client', JSON.stringify(client));
     localStorage.setItem('isAuthenticated', 'true');
     
@@ -88,8 +90,9 @@ export const authService = {
     const response = await apiClient.post('/auth/register', userData);
     const { client, token, isNewUser } = response.data;
     
-    // Guardar token JWT y datos del cliente en localStorage
-    if (token) localStorage.setItem('token', token);
+    // RESUELTO EL CONFLICTO: Usamos 'authToken'
+    if (token) localStorage.setItem('authToken', token);
+
     localStorage.setItem('client', JSON.stringify(client));
     localStorage.setItem('isAuthenticated', 'true');
     
@@ -98,6 +101,7 @@ export const authService = {
 
   // Cerrar sesión
   logout: (): void => {
+    // Aquí es crucial que coincida. Como borras 'authToken', el login debe guardar 'authToken'.
     localStorage.removeItem('authToken');
     localStorage.removeItem('client');
     localStorage.removeItem('isAuthenticated');
