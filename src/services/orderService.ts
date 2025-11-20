@@ -2,68 +2,34 @@ import { apiClient } from './api';
 import type { Product } from '../types';
 
 export interface CreateOrderRequest {
-  customer_info: {
-    full_name: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    postal_code?: string;
-    reference?: string;
-  };
   items: Array<{
     product_id: number;
     quantity: number;
-    unit_price: number; // En soles
-    personalization?: {
-      text: string;
-      cost: number;
-    };
+    item_price: number;
+    personalization_data?: any;
   }>;
-  total_amount: number; // En soles
-  payment_method: string;
+  delivery_type: 'DELIVERY' | 'PICKUP';
 }
 
 export interface Order {
   order_id: number;
-  client_id?: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  total_amount: number;
-  payment_method: string;
-  payment_proof_url?: string;
-  customer_info: {
-    full_name: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    postal_code?: string;
-    reference?: string;
-  };
-  items: Array<{
-    product_id: number;
-    quantity: number;
-    unit_price: number;
-    personalization?: {
-      text: string;
-      cost: number;
-    };
-  }>;
+  client_id: number;
+  status: string;
+  total_price: number;
   created_at: string;
-  updated_at: string;
+  due_date?: string;
+  payment_proof_url?: string;
+  invoice_pdf_url?: string;
+  delivery_type: 'DELIVERY' | 'PICKUP';
+  pickup_code?: string;
 }
 
-export interface CreateOrderResponse {
-  success: boolean;
-  message: string;
-  order: Order;
-}
+export interface CreateOrderResponse extends Order {}
 
 export const orderService = {
   // Crear nueva orden (ruta autenticada para clientes registrados)
-  // 
-  createOrder: async (orderData: CreateOrderRequest): Promise<CreateOrderResponse> => {
-    const response = await apiClient.post<CreateOrderResponse>('/orders', orderData);
+  createOrder: async (orderData: CreateOrderRequest): Promise<Order> => {
+    const response = await apiClient.post<Order>('/orders', orderData);
     return response.data;
   },
 

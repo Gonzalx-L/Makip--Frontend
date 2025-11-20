@@ -52,6 +52,9 @@ export interface Product {
   category_name?: string; // Viene del JOIN con categories
 }
 
+// 💡 NUEVO: Tipo para el método de entrega
+export type DeliveryMethod = 'DELIVERY' | 'PICKUP';
+
 // Estados de pedido (ENUM)
 export type OrderStatus =
   | "NO_PAGADO"
@@ -80,6 +83,8 @@ export interface OrderItem {
   item_price: number;
   personalization_data?: PersonalizationData;
   product?: Product; // Para mostrar datos del producto
+  // 💡 SUGERENCIA: Podrías agregar aquí 'selected_variant' si lo quieres mostrar
+  selected_variant?: any;
 }
 
 // Pedido completo
@@ -94,7 +99,12 @@ export interface Order {
   created_at: string;
   updated_at: string;
   items?: OrderItem[]; // Items del pedido
+  // 💡 NUEVOS CAMPOS (Backend v1.5)
+  delivery_type: DeliveryMethod;
+  pickup_code?: string; // Puede venir undefined o null si es DELIVERY
 }
+
+
 
 // Interface para crear productos (DTO)
 export interface CreateProductDTO {

@@ -12,11 +12,14 @@ import { useDebounce } from "../../hooks/useDebounce";
 // --- Interface de la Orden ---
 interface Order {
   order_id: number;
-  client_name: string;
-  client_email: string;
+  client_id: number;
   status: OrderStatus;
   total_price: string | number;
   created_at: string;
+  delivery_type?: 'DELIVERY' | 'PICKUP';
+  pickup_code?: string;
+  client_name?: string; // Puede venir de un JOIN
+  client_email?: string; // Puede venir de un JOIN
 }
 
 // 💡 2. ELIMINAMOS la definición de useDebounce de este archivo
@@ -29,46 +32,101 @@ const OrdersPage: React.FC = () => {
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
+  const [deliveryType, setDeliveryType] = useState<'ALL' | 'DELIVERY' | 'PICKUP'>('ALL');
+  const [pickupCode, setPickupCode] = useState("");
+  const [searchingCode, setSearchingCode] = useState(""); // Código que se está buscando activamente
   const [startDate, setStartDate] = useState(""); // "YYYY-MM-DD"
   const [endDate, setEndDate] = useState(""); // "YYYY-MM-DD"
 
-  // Usamos el valor "debounced" para la búsqueda
-  const debouncedSearchTerm = useDebounce(searchTerm, 500); // 500ms de espera
+  // Usamos el valor "debounced" para búsquedas generales
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Este useEffect ahora depende de los filtros
-  // y llama al endpoint de REPORTES
+  // Cargar órdenes desde el backend
   useEffect(() => {
     const fetchOrders = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const params = new URLSearchParams();
-        if (debouncedSearchTerm) {
-          params.append("clientName", debouncedSearchTerm);
+        console.log('Intentando cargar órdenes del admin...');
+        
+        // Verificar si hay token de admin
+        const adminToken = localStorage.getItem('adminToken');
+        if (!adminToken) {
+          throw new Error('No hay token de administrador. Por favor, inicia sesión nuevamente.');
         }
-        if (startDate) {
-          params.append("startDate", startDate);
+        
+        // Usar diferentes endpoints según los filtros
+        let response;
+        let ordersData = [];
+        
+        if (searchingCode.trim()) {
+          // Buscar por código de recojo específico
+          console.log('Buscando por código:', searchingCode.trim());
+          response = await apiClient.get(`/admin/orders/pickup-code/${searchingCode.trim()}`);
+          console.log('Respuesta búsqueda por código:', response.data);
+          
+          // La respuesta tiene estructura { message, order }
+          if (response.data.order) {
+            ordersData = [response.data.order];
+          } else {
+            ordersData = [];
+          }
+        } else if (deliveryType !== 'ALL') {
+          // Filtrar por tipo de entrega
+          console.log('Filtrando por tipo:', deliveryType);
+          response = await apiClient.get(`/admin/orders/delivery/${deliveryType}`);
+          console.log('Respuesta filtro por tipo:', response.data);
+          
+          // La respuesta tiene estructura { message, deliveryType, orders }
+          ordersData = response.data.orders || [];
+        } else {
+          // Obtener todas las órdenes
+          console.log('Obteniendo todas las órdenes');
+          response = await apiClient.get<Order[]>('/admin/orders');
+          console.log('Respuesta todas las órdenes:', response.data);
+          
+          // La respuesta es directamente el array
+          ordersData = response.data || [];
         }
-        if (endDate) {
-          params.append("endDate", endDate);
-        }
-
-        const response = await apiClient.get<Order[]>(
-          `/admin/reports?${params.toString()}`
-        );
-        setOrders(response.data);
-      } catch (err) {
+        
+        console.log('Órdenes finales a mostrar:', ordersData);
+        setOrders(ordersData);
+      } catch (err: any) {
         console.error("Error al cargar órdenes:", err);
-        setError("Error al cargar las órdenes.");
+        setError(`Error al cargar las órdenes: ${err.response?.data?.message || err.message}`);
       } finally {
         setIsLoading(false);
       }
     };
     fetchOrders();
+  }, [deliveryType, searchingCode]);
+
+  // Efecto separado para filtros (solo se ejecuta después de la carga inicial)
+  useEffect(() => {
+    if (orders.length === 0) return; // No filtrar si no hay datos
+
+    // Aquí puedes implementar filtrado local si el backend no soporta filtros
+    // Por ahora, mantenemos los filtros como están
   }, [debouncedSearchTerm, startDate, endDate]);
 
   const handleViewDetails = (id: number) => {
     navigate(`/admin/ordenes/${id}`);
+  };
+
+  const handleSearchCode = () => {
+    if (pickupCode.trim()) {
+      setSearchingCode(pickupCode.trim());
+      // Cambiar automáticamente a PICKUP cuando busca por código
+      if (deliveryType !== 'PICKUP') {
+        setDeliveryType('PICKUP');
+      }
+    }
+  };
+
+  const handleClearSearch = () => {
+    setPickupCode("");
+    setSearchingCode("");
+    setDeliveryType('ALL');
   };
 
   if (isLoading) {
@@ -95,37 +153,115 @@ const OrdersPage: React.FC = () => {
       </div>
 
       {/* Filtros */}
-      <div className='mb-4 grid grid-cols-1 md:grid-cols-3 gap-4'>
-        {/* Filtro por Cliente */}
-        <div className='relative'>
-          <input
-            type='text'
-            placeholder='Buscar por cliente...'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className='w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
-          />
-          <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
+      <div className='mb-6 space-y-4'>
+        {/* Primera fila de filtros */}
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+          {/* Filtro por Tipo de Entrega */}
+          <select
+            value={deliveryType}
+            onChange={(e) => setDeliveryType(e.target.value as 'ALL' | 'DELIVERY' | 'PICKUP')}
+            className='w-full px-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+          >
+            <option value="ALL">📦 Todos los pedidos</option>
+            <option value="DELIVERY">🚚 Solo Delivery</option>
+            <option value="PICKUP">🏪 Solo Recojo en tienda</option>
+          </select>
+
+          {/* Filtro por Código de Recojo */}
+          <div className='flex gap-2'>
+            <div className='relative flex-1'>
+              <input
+                type='text'
+                placeholder='Código de recojo (ej: REC-A1B2)'
+                value={pickupCode}
+                onChange={(e) => setPickupCode(e.target.value.toUpperCase())}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchCode();
+                  }
+                }}
+                className='w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 uppercase'
+                style={{ textTransform: 'uppercase' }}
+              />
+              <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
+            </div>
+            <button
+              onClick={handleSearchCode}
+              disabled={!pickupCode.trim()}
+              className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2'
+            >
+              <Search size={16} />
+              Buscar
+            </button>
+            {searchingCode && (
+              <button
+                onClick={handleClearSearch}
+                className='px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors'
+                title='Limpiar búsqueda'
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Botón para limpiar filtros */}
+          <button
+            onClick={() => {
+              setDeliveryType('ALL');
+              setPickupCode('');
+              setSearchingCode('');
+              setSearchTerm('');
+              setStartDate('');
+              setEndDate('');
+            }}
+            className='px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors'
+          >
+            🔄 Limpiar Filtros
+          </button>
+
+          {/* Estadísticas rápidas */}
+          <div className='text-sm text-gray-600 flex flex-col'>
+            <div className='flex items-center'>
+              <span className='font-medium'>{orders.length}</span> órdenes encontradas
+            </div>
+            {searchingCode && (
+              <div className='text-xs text-blue-600 mt-1'>
+                🔍 Resultados para código: "{searchingCode}"
+              </div>
+            )}
+          </div>
         </div>
-        {/* Filtro Desde */}
-        <div className='relative'>
-          <input
-            type='date'
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className='w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
-          />
-          <CalendarDays className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
-        </div>
-        {/* Filtro Hasta */}
-        <div className='relative'>
-          <input
-            type='date'
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className='w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
-          />
-          <CalendarDays className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
+
+        {/* Segunda fila - filtros de fecha y búsqueda (para uso futuro) */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4' style={{ display: 'none' }}>
+          <div className='relative'>
+            <input
+              type='text'
+              placeholder='Buscar por cliente...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className='w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+            />
+            <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
+          </div>
+          <div className='relative'>
+            <input
+              type='date'
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className='w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+            />
+            <CalendarDays className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
+          </div>
+          <div className='relative'>
+            <input
+              type='date'
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className='w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+            />
+            <CalendarDays className='absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400' />
+          </div>
         </div>
       </div>
 
@@ -150,6 +286,9 @@ const OrdersPage: React.FC = () => {
                 <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
                   Total
                 </th>
+                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
+                  Código Recojo
+                </th>
                 <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase'>
                   Acciones
                 </th>
@@ -163,10 +302,15 @@ const OrdersPage: React.FC = () => {
                       #{order.order_id}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
-                      {order.client_name}
+                      {order.client_name || `Cliente #${order.client_id}`}
                       <div className='text-xs text-gray-500'>
-                        {order.client_email}
+                        {order.client_email || 'Email no disponible'}
                       </div>
+                      {order.delivery_type && (
+                        <div className='text-xs text-blue-600 font-medium'>
+                          {order.delivery_type === 'PICKUP' ? '📦 Recojo en tienda' : '🚚 Delivery'}
+                        </div>
+                      )}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
                       {new Date(order.created_at).toLocaleString("es-ES", {
@@ -183,6 +327,15 @@ const OrdersPage: React.FC = () => {
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium'>
                       S/ {Number(order.total_price).toFixed(2)}
                     </td>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-700'>
+                      {order.pickup_code ? (
+                        <span className='font-mono bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs'>
+                          {order.pickup_code}
+                        </span>
+                      ) : (
+                        <span className='text-gray-400 text-xs'>-</span>
+                      )}
+                    </td>
                     <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
                       <button
                         onClick={() => handleViewDetails(order.order_id)}
@@ -196,7 +349,7 @@ const OrdersPage: React.FC = () => {
               ) : (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className='px-6 py-4 text-center text-sm text-gray-500'>
                     No se encontraron órdenes con esos filtros.
                   </td>
