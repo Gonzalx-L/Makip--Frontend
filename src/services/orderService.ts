@@ -9,6 +9,16 @@ export interface CreateOrderRequest {
     personalization_data?: any;
   }>;
   delivery_type: 'DELIVERY' | 'PICKUP';
+  // Datos del cliente para órdenes públicas (usuarios no autenticados)
+  client_data?: {
+    full_name: string;
+    email: string;
+    phone: string;
+    address?: string;
+    city?: string;
+    district?: string;
+    reference?: string;
+  };
 }
 
 export interface Order {

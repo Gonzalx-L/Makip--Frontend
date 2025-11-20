@@ -121,13 +121,27 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           item_price: item.product.base_price,
           personalization_data: item.personalization || null
         })),
-        delivery_type: 'PICKUP'
+        delivery_type: 'PICKUP',
+        // Incluir datos del cliente para usuarios no autenticados
+        ...(!isAuthenticated && {
+          client_data: {
+            full_name: shippingData.fullName,
+            email: shippingData.email,
+            phone: shippingData.phone,
+            address: shippingData.address,
+            city: shippingData.city,
+            district: shippingData.district,
+            reference: shippingData.reference
+          }
+        })
       };
       
       setLoadingStep('validating');
       
-      // Crear orden en el backend (solo para usuarios autenticados según tu backend)
-      const response = await orderService.createOrder(orderData);
+      // Usar endpoint correcto según el estado de autenticación
+      const response = isAuthenticated 
+        ? await orderService.createOrder(orderData)
+        : await orderService.createPublicOrder(orderData);
       
       setLoadingStep('completing');
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -171,11 +185,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           item_price: item.product.base_price,
           personalization_data: item.personalization || null
         })),
-        delivery_type: 'DELIVERY'
+        delivery_type: 'DELIVERY',
+        // Incluir datos del cliente para usuarios no autenticados
+        ...(!isAuthenticated && {
+          client_data: {
+            full_name: shippingData.fullName,
+            email: shippingData.email,
+            phone: shippingData.phone,
+            address: shippingData.address,
+            city: shippingData.city,
+            district: shippingData.district,
+            reference: shippingData.reference
+          }
+        })
       };
       
-      // Crear orden en el backend (solo para usuarios autenticados según tu backend)
-      const response = await orderService.createOrder(orderData);
+      // Usar endpoint correcto según el estado de autenticación
+      const response = isAuthenticated 
+        ? await orderService.createOrder(orderData)
+        : await orderService.createPublicOrder(orderData);
       
       setLoadingStep('validating');
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simular procesamiento

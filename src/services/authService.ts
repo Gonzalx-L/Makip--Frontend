@@ -147,8 +147,8 @@ export const authService = {
 
   isAuthenticated: (): boolean => {
     return (
-      localStorage.getItem("isAuthenticated") === "true" ||
-      !!localStorage.getItem("token")
+      localStorage.getItem("isAuthenticated") === "true" &&
+      !!localStorage.getItem("authToken")
     );
   },
 
