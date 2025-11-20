@@ -11,16 +11,17 @@ import {
 import axios from "axios";
 
 // --- Type: OrderStatus ---
-// Si quieres centralizar, colócalo en /types/OrderStatus.ts y exporta desde ahí
+// IMPORTANTE: Usar EXACTAMENTE los mismos valores que el backend (SNAKE_CASE MAYÚSCULAS)
 export type OrderStatus =
   | "NO_PAGADO"
   | "PAGO_EN_VERIFICACION"
   | "PENDIENTE"
   | "EN_EJECUCION"
   | "TERMINADO"
+  | "COMPLETADO"
   | "CANCELADO";
 
-// Etiquetas legibles para mostrar en el select
+// Etiquetas legibles para mostrar en el select (SOLO PARA UI)
 // eslint-disable-next-line react-refresh/only-export-components
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   NO_PAGADO: "No pagado",
@@ -28,6 +29,7 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDIENTE: "Pendiente",
   EN_EJECUCION: "En ejecución",
   TERMINADO: "Terminado",
+  COMPLETADO: "Completado",
   CANCELADO: "Cancelado",
 };
 
@@ -45,12 +47,19 @@ interface OrderItem {
 
 interface OrderDetails {
   order_id: number;
+  client_id: number;
   client_name: string;
   client_email: string;
+  client_phone: string;
   status: OrderStatus;
   total_price: string | number;
   created_at: string;
+  updated_at: string;
   payment_proof_url: string | null;
+  invoice_pdf_url: string | null;
+  due_date: string | null;
+  delivery_type: 'DELIVERY' | 'PICKUP';
+  pickup_code: string | null;
   items: OrderItem[];
 }
 
@@ -75,9 +84,6 @@ const OrderDetailPage: React.FC = () => {
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Inicializa con "" para el select, pero el tipo ahora es OrderStatus | ""
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "">("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -87,14 +93,45 @@ const OrderDetailPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await apiClient.get<OrderDetails>(
-          `/admin/orders/${id}`
-        );
-        setOrder(response.data);
-        setSelectedStatus(response.data.status); // Setea el dropdown al estado actual
-      } catch (err) {
-        console.error("Error al cargar detalle de orden:", err);
-        setError("Error al cargar el detalle de la orden.");
+        console.log(`🔍 Cargando orden #${id}...`);
+        const response = await apiClient.get(`/admin/orders/${id}`);
+        
+        console.log('📦 Respuesta completa del backend:', response.data);
+        
+        // Manejar diferentes formatos de respuesta del backend
+        let orderData: OrderDetails;
+        
+        if (response.data.order && response.data.items) {
+          // Formato: { order: {...}, items: [...] }
+          orderData = {
+            ...response.data.order,
+            items: response.data.items
+          };
+          console.log('✅ Formato detectado: { order, items }');
+        } else if (response.data.items) {
+          // Formato: { ...orderFields, items: [...] }
+          orderData = response.data;
+          console.log('✅ Formato detectado: orden directa con items');
+        } else {
+          // Formato: orden directa sin items
+          orderData = {
+            ...response.data,
+            items: []
+          };
+          console.log('⚠️ Formato detectado: orden sin items array');
+        }
+        
+        console.log('✅ Orden procesada:', orderData);
+        console.log('📋 Estado:', orderData.status);
+        console.log('👤 Cliente:', orderData.client_name);
+        console.log('📦 Items:', orderData.items?.length || 0);
+        
+        setOrder(orderData);
+      } catch (err: any) {
+        console.error("❌ Error al cargar detalle de orden:", err);
+        console.error("❌ Status:", err.response?.status);
+        console.error("❌ Respuesta:", err.response?.data);
+        setError(err.response?.data?.message || "Error al cargar el detalle de la orden.");
       } finally {
         setIsLoading(false);
       }
@@ -103,37 +140,90 @@ const OrderDetailPage: React.FC = () => {
     fetchOrderDetails();
   }, [id]);
 
+  // 🔥 TRANSICIONES VÁLIDAS (deben coincidir con el backend)
+  const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+    'NO_PAGADO': ['PAGO_EN_VERIFICACION', 'CANCELADO'],
+    'PAGO_EN_VERIFICACION': ['PENDIENTE', 'NO_PAGADO', 'CANCELADO'],
+    'PENDIENTE': ['EN_EJECUCION', 'CANCELADO'],
+    'EN_EJECUCION': ['TERMINADO', 'CANCELADO'],
+    'TERMINADO': ['COMPLETADO'],
+    'COMPLETADO': [],
+    'CANCELADO': []
+  };
+
+  // Obtener transiciones permitidas para el estado actual
+  const getAllowedTransitions = (): OrderStatus[] => {
+    if (!order) return [];
+    return VALID_TRANSITIONS[order.status] || [];
+  };
+
   // --- Guardar el nuevo estado ---
-  const handleStatusChange = async () => {
+  const handleStatusChange = async (newStatus: OrderStatus) => {
     if (!order) return;
-    if (!selectedStatus || selectedStatus === order.status) {
-      return; // No hacer nada si no hay cambio
+    
+    const allowedTransitions = getAllowedTransitions();
+    if (!allowedTransitions.includes(newStatus)) {
+      setError(`No se puede cambiar de "${ORDER_STATUS_LABELS[order.status]}" a "${ORDER_STATUS_LABELS[newStatus]}"`);
+      return;
     }
+
+    const confirmMsg = 
+      newStatus === 'EN_EJECUCION' ? '🏭 ¿Iniciar producción?\n\n✅ Se enviará email al cliente' :
+      newStatus === 'TERMINADO' ? '✅ ¿Marcar como terminado?\n\n📧 El cliente será notificado' :
+      newStatus === 'COMPLETADO' ? '📦 ¿Marcar como completado?\n\n🎉 Se enviará confirmación final' :
+      newStatus === 'CANCELADO' ? '❌ ¿Cancelar esta orden?' :
+      '¿Cambiar el estado?';
+    
+    if (!confirm(confirmMsg)) return;
 
     setIsSaving(true);
     setSaveSuccess(false);
     setError(null);
 
     try {
-      await apiClient.patch(`/admin/orders/${id}/status`, {
-        status: selectedStatus,
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📤 ENVIANDO CAMBIO DE ESTADO');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🆔 Order ID:', id);
+      console.log('📊 Nuevo estado:', newStatus);
+      console.log('📦 Body JSON:', JSON.stringify({ newStatus }, null, 2));
+      console.log('🌐 URL:', `/admin/orders/${id}/status`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      const response = await apiClient.patch(`/admin/orders/${id}/status`, {
+        newStatus: newStatus
       });
+      
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ RESPUESTA EXITOSA:');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📦 Response data:', response.data);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       // Actualiza el estado localmente
-      setOrder({ ...order, status: selectedStatus as OrderStatus });
+      setOrder({ ...order, status: newStatus });
       setSaveSuccess(true);
+      
+      const notificationsSent = response.data?.notifications_sent || false;
+      if (notificationsSent) {
+        alert('✅ Estado actualizado\n\n📧 Correo enviado al cliente');
+      }
 
       // Oculta el "Guardado" después de 2s
       setTimeout(() => setSaveSuccess(false), 2000);
-    } catch (err: unknown) {
-      console.error("Error al actualizar estado:", err);
-      let msg = "Error al guardar.";
-      if (axios.isAxiosError(err) && err.response) {
-        msg =
-          (err.response.data as ErrorResponse)?.message ||
-          `Error: ${err.response.status}`;
-      }
+    } catch (err: any) {
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.error("❌ ERROR AL CAMBIAR ESTADO");
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.error("🔴 Status:", err.response?.status);
+      console.error("🔴 Mensaje:", err.response?.data?.message);
+      console.error("🔴 Data completa:", err.response?.data);
+      console.error("🔴 Config enviado:", err.config?.data);
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      
+      const msg = err.response?.data?.message || "Error al actualizar estado";
       setError(msg);
+      alert(`❌ ${msg}`);
     } finally {
       setIsSaving(false);
     }
@@ -286,66 +376,79 @@ const OrderDetailPage: React.FC = () => {
         <div className='lg:col-span-1 space-y-6'>
           <div className='rounded-lg border border-gray-200 bg-white p-6 shadow-sm sticky top-6'>
             <h2 className='text-xl font-semibold text-gray-800 mb-4'>
-              Acciones
+              Gestión de Estado
             </h2>
 
             <div className='space-y-4'>
-              <div>
-                <label
-                  htmlFor='order_status'
-                  className='block text-sm font-medium text-gray-700'>
-                  Cambiar Estado del Pedido
-                </label>
-                <select
-                  id='order_status'
-                  value={selectedStatus}
-                  onChange={(e) =>
-                    setSelectedStatus(e.target.value as OrderStatus)
-                  }
-                  className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'>
-                  <option value='' disabled>
-                    Selecciona un estado
-                  </option>
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {ORDER_STATUS_LABELS[status]}
-                    </option>
-                  ))}
-                </select>
+              {/* Estado actual */}
+              <div className='p-3 bg-gray-50 rounded-md'>
+                <p className='text-xs text-gray-500 mb-1'>Estado actual:</p>
+                <p className='text-lg font-semibold text-gray-900'>
+                  {ORDER_STATUS_LABELS[order.status]}
+                </p>
               </div>
 
-              <button
-                onClick={handleStatusChange}
-                disabled={
-                  isSaving || !selectedStatus || selectedStatus === order.status
-                }
-                className='w-full flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-md transition-colors hover:bg-blue-700 disabled:opacity-50'>
-                {isSaving ? (
-                  <Loader2 className='h-5 w-5 animate-spin' />
-                ) : saveSuccess ? (
-                  <CheckCircle className='h-5 w-5' />
-                ) : (
-                  <Package className='h-5 w-5 mr-2' />
-                )}
-                <span className='ml-2'>
-                  {isSaving
-                    ? "Guardando..."
-                    : saveSuccess
-                    ? "Guardado"
-                    : "Guardar Cambios"}
-                </span>
-              </button>
+              {/* Botones de acción según estado actual */}
+              <div className='space-y-2'>
+                <p className='text-sm font-medium text-gray-700 mb-2'>
+                  Acciones disponibles:
+                </p>
 
-              {error && <p className='text-sm text-red-600'>{error}</p>}
-
-              {/* Aviso contextual */}
-              {selectedStatus === "EN_EJECUCION" &&
-                order.status !== "EN_EJECUCION" && (
-                  <p className='text-sm text-blue-600'>
-                    Al pasar a "En ejecución" puedes coordinar la generación del
-                    mockup y contacto con el cliente.
+                {getAllowedTransitions().length === 0 ? (
+                  <p className='text-sm text-gray-500 italic'>
+                    {order.status === 'COMPLETADO' 
+                      ? '✅ Orden completada. No hay más acciones disponibles.'
+                      : 'No hay transiciones disponibles para este estado.'}
                   </p>
+                ) : (
+                  getAllowedTransitions().map((nextStatus) => (
+                    <button
+                      key={nextStatus}
+                      onClick={() => handleStatusChange(nextStatus)}
+                      disabled={isSaving}
+                      className={`w-full flex items-center justify-center rounded-md px-4 py-3 text-sm font-medium text-white shadow-md transition-colors disabled:opacity-50
+                        ${nextStatus === 'EN_EJECUCION' ? 'bg-blue-600 hover:bg-blue-700' :
+                          nextStatus === 'TERMINADO' ? 'bg-green-600 hover:bg-green-700' :
+                          nextStatus === 'COMPLETADO' ? 'bg-purple-600 hover:bg-purple-700' :
+                          nextStatus === 'CANCELADO' ? 'bg-red-600 hover:bg-red-700' :
+                          'bg-gray-600 hover:bg-gray-700'}`}>
+                      {isSaving ? (
+                        <Loader2 className='h-5 w-5 animate-spin' />
+                      ) : (
+                        <>
+                          {nextStatus === 'EN_EJECUCION' && '🏭 Iniciar Producción'}
+                          {nextStatus === 'TERMINADO' && '✅ Marcar Terminado'}
+                          {nextStatus === 'COMPLETADO' && '📦 Marcar Completado'}
+                          {nextStatus === 'CANCELADO' && '❌ Cancelar Orden'}
+                          {nextStatus === 'PENDIENTE' && '✅ Aprobar Pago'}
+                          {nextStatus === 'PAGO_EN_VERIFICACION' && '⏳ Enviar a Verificación'}
+                          {nextStatus === 'NO_PAGADO' && '❌ Rechazar Pago'}
+                        </>
+                      )}
+                    </button>
+                  ))
                 )}
+              </div>
+
+              {saveSuccess && (
+                <div className='flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-md'>
+                  <CheckCircle size={16} />
+                  <span className='text-sm'>Estado actualizado correctamente</span>
+                </div>
+              )}
+
+              {error && (
+                <div className='p-3 bg-red-50 text-red-700 rounded-md'>
+                  <p className='text-sm whitespace-pre-line'>{error}</p>
+                </div>
+              )}
+
+              {/* Información de ayuda */}
+              <div className='mt-4 p-3 bg-blue-50 rounded-md'>
+                <p className='text-xs text-blue-700'>
+                  <strong>ℹ️ Nota:</strong> Solo se muestran las transiciones permitidas según el estado actual.
+                </p>
+              </div>
             </div>
           </div>
         </div>

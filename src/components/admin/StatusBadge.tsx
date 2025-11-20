@@ -1,7 +1,7 @@
 // src/components/admin/StatusBadge.tsx
 import React from "react";
 
-// 🔹 Define exactamente los estados permitidos (basado en tu backend)
+// 🔹 Define exactamente los estados permitidos (DEBEN COINCIDIR CON BACKEND)
 export type OrderStatus =
   | "NO_PAGADO"
   | "PAGO_EN_VERIFICACION" 
@@ -9,40 +9,31 @@ export type OrderStatus =
   | "EN_EJECUCION"
   | "TERMINADO"
   | "COMPLETADO"
-  | "CANCELADO"
-  // Variaciones para compatibilidad
-  | "Completado" | "Pendiente" | "Procesando";
+  | "CANCELADO";
 
 interface StatusBadgeProps {
   status: OrderStatus | string;
 }
 
-// 🔹 Mapa de estilos en un solo lugar (limpio y escalable)
+// 🔹 Mapa de estilos - SOLO estados válidos del backend (SNAKE_CASE MAYÚSCULAS)
 const STATUS_STYLES: Record<
   OrderStatus,
   { bg: string; text: string; label?: string }
 > = {
-  Completado: {
-    bg: "bg-green-100",
-    text: "text-green-800",
+  NO_PAGADO: {
+    bg: "bg-gray-100",
+    text: "text-gray-800",
+    label: "No Pagado",
   },
-  COMPLETADO: {
-    bg: "bg-green-100",
-    text: "text-green-800",
-    label: "Completado",
-  },
-  Pendiente: {
-    bg: "bg-yellow-100",
-    text: "text-yellow-800",
+  PAGO_EN_VERIFICACION: {
+    bg: "bg-orange-100",
+    text: "text-orange-800",
+    label: "Verificando Pago",
   },
   PENDIENTE: {
-    bg: "bg-yellow-100",
-    text: "text-yellow-800",
-    label: "Pendiente",
-  },
-  Procesando: {
-    bg: "bg-blue-100",
-    text: "text-blue-800",
+    bg: "bg-green-100",
+    text: "text-green-800",
+    label: "✅ Pago Validado",
   },
   EN_EJECUCION: {
     bg: "bg-blue-100",
@@ -54,15 +45,10 @@ const STATUS_STYLES: Record<
     text: "text-purple-800",
     label: "Terminado",
   },
-  PAGO_EN_VERIFICACION: {
-    bg: "bg-orange-100",
-    text: "text-orange-800",
-    label: "Verificando Pago",
-  },
-  NO_PAGADO: {
-    bg: "bg-gray-100",
-    text: "text-gray-800",
-    label: "No Pagado",
+  COMPLETADO: {
+    bg: "bg-green-100",
+    text: "text-green-800",
+    label: "Completado",
   },
   CANCELADO: {
     bg: "bg-red-100",

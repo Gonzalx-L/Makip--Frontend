@@ -24,21 +24,105 @@ const TrackingPage: React.FC = () => {
   
   useEffect(() => {
     console.log('TrackingPage - orderId:', orderId);
-    console.log('TrackingPage - mockTrackingData:', mockTrackingData);
     
     if (orderId) {
-      // Simular carga de datos del pedido específico
-      const updatedTrackingData = {
-        ...mockTrackingData,
-        id: orderId
-      };
-      console.log('TrackingPage - updatedTrackingData:', updatedTrackingData);
-      setTrackingInfo(updatedTrackingData);
+      // TODO: Aquí deberías hacer un fetch real al backend
+      // Por ahora usamos datos mock pero con el ID correcto
+      fetch(`/api/v1/orders/${orderId}`)
+        .then(res => res.json())
+        .then(orderData => {
+          // Mapear el estado real del backend a los pasos del tracking
+          const mappedTracking = mapOrderToTracking(orderData);
+          setTrackingInfo(mappedTracking);
+        })
+        .catch(err => {
+          console.error('Error al obtener orden:', err);
+          // Fallback a datos mock
+          const updatedTrackingData = {
+            ...mockTrackingData,
+            id: orderId
+          };
+          setTrackingInfo(updatedTrackingData);
+        });
     } else {
-      console.log('TrackingPage - usando mockTrackingData directo');
       setTrackingInfo(mockTrackingData);
     }
   }, [orderId]);
+
+  // Función para mapear la orden del backend al formato de tracking
+  const mapOrderToTracking = (order: any): TrackingInfo => {
+    const updates: any[] = [];
+    const status = order.status;
+
+    // Paso 1: Pedido Confirmado (siempre mostrar si existe)
+    if (status !== 'NO_PAGADO' && status !== 'PAGO_EN_VERIFICACION') {
+      updates.push({
+        status: 'Confirmado',
+        description: 'Pedido confirmado y pago aprobado',
+        date: new Date(order.created_at).toLocaleString('es-ES'),
+        isComplete: true
+      });
+    }
+
+    // Paso 2: En Producción
+    if (status === 'EN_EJECUCION' || status === 'TERMINADO' || status === 'COMPLETADO') {
+      updates.push({
+        status: 'En Producción',
+        description: 'Tu pedido está en producción',
+        date: new Date(order.updated_at).toLocaleString('es-ES'),
+        isComplete: true
+      });
+    }
+
+    // Paso 3: Producción Terminada
+    if (status === 'TERMINADO' || status === 'COMPLETADO') {
+      updates.push({
+        status: 'Producción Finalizada',
+        description: 'Producción finalizada y empaquetado',
+        date: new Date(order.updated_at).toLocaleString('es-ES'),
+        isComplete: true
+      });
+    }
+
+    // Paso 4: Entregado/Listo para Recojo
+    if (status === 'COMPLETADO') {
+      if (order.delivery_type === 'PICKUP') {
+        updates.push({
+          status: 'Listo para Recojo',
+          description: `Usa tu código: ${order.pickup_code || 'N/A'}`,
+          date: new Date(order.updated_at).toLocaleString('es-ES'),
+          isComplete: true
+        });
+      } else {
+        updates.push({
+          status: 'Entregado',
+          description: 'Pedido entregado exitosamente',
+          date: new Date(order.updated_at).toLocaleString('es-ES'),
+          isComplete: true
+        });
+      }
+    }
+
+    // Determinar el banner según el estado
+    let statusBanner = '';
+    if (status === 'PENDIENTE') statusBanner = 'Pedido Confirmado';
+    else if (status === 'EN_EJECUCION') statusBanner = 'En Producción';
+    else if (status === 'TERMINADO') statusBanner = 'Producción Finalizada';
+    else if (status === 'COMPLETADO' && order.delivery_type === 'PICKUP') {
+      statusBanner = `Listo para Recojo - Código: ${order.pickup_code}`;
+    } else if (status === 'COMPLETADO') statusBanner = 'Entregado';
+    else statusBanner = 'En Proceso';
+
+    return {
+      id: order.order_id.toString(),
+      statusBanner,
+      carrier: 'Makip Express',
+      carrierTrackingId: `MKP${order.order_id.toString().padStart(6, '0')}`,
+      updates,
+      productName: order.items?.[0]?.product_name || 'Producto Personalizado',
+      productImage: order.items?.[0]?.personalization_data?.image_url
+    };
+  };
 
   console.log('TrackingPage - trackingInfo final:', trackingInfo);
 

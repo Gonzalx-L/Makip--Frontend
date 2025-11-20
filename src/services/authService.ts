@@ -115,18 +115,6 @@ export const authService = {
     return response.data; // { message: string }
   },
 
-  // Cambiar contraseña usando token del correo
-  resetPassword: async (
-    token: string,
-    newPassword: string
-  ): Promise<BasicMessageResponse> => {
-    const response = await apiClient.post("/auth/reset-password", {
-      token,
-      newPassword,
-    });
-    return response.data; // { message: string }
-  },
-
   // ==========================
   // Logout
   // ==========================
@@ -152,6 +140,10 @@ export const authService = {
     );
   },
 
+  // ==========================
+  // Recuperación de contraseña
+  // ==========================
+  
   // Solicitar recuperación de contraseña
   forgotPassword: async (email: string): Promise<ForgotPasswordResponse> => {
     const response = await apiClient.post('/auth/forgot-password', { email });

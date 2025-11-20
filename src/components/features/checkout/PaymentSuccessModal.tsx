@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaWhatsapp, FaDownload, FaEye, FaUpload, FaSpinner } from 'react-icons/fa';
-import { uploadPaymentProofPublic } from '../../../services/paymentProofService';
+import { uploadPaymentProofPublic, uploadPaymentProof } from '../../../services/paymentProofService';
+import { useAuthContext } from '../../../contexts/AuthContext';
+import { orderService, type Order } from '../../../services/orderService';
 
 interface PaymentSuccessModalProps {
   isOpen: boolean;
@@ -19,10 +21,25 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
   const [confetti, setConfetti] = useState(true);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadMessage, setUploadMessage] = useState('');
+  const [uploadErrorCode, setUploadErrorCode] = useState<number | null>(null);
+  const [orderData, setOrderData] = useState<Order | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
+
+    // Al abrir el modal, traer la información completa de la orden
+    const fetchOrder = async () => {
+      try {
+        const data = await orderService.getOrderById(orderId);
+        setOrderData(data);
+      } catch (err) {
+        console.warn('No se pudo obtener la orden:', err);
+        setOrderData(null);
+      }
+    };
+
+    if (orderId) fetchOrder();
 
     // Countdown para redirección automática
     const timer = setInterval(() => {
@@ -64,6 +81,8 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
     fileInputRef.current?.click();
   };
 
+  const { isAuthenticated } = useAuthContext();
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -72,7 +91,21 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
     setUploadMessage('Subiendo comprobante...');
 
     try {
-      const result = await uploadPaymentProofPublic(orderId, file);
+      let result;
+      if (isAuthenticated) {
+        result = await uploadPaymentProof(orderId, file);
+      } else {
+        result = await uploadPaymentProofPublic(orderId, file);
+      }
+      // actualizar info de la orden por si el backend devuelve cambios
+      if (result.order) {
+        try {
+          const refreshed = await orderService.getOrderById(orderId);
+          setOrderData(refreshed);
+        } catch (refreshErr) {
+          console.warn('No se pudo refrescar orden tras upload:', refreshErr);
+        }
+      }
       setUploadStatus('success');
       setUploadMessage(result.message);
       
@@ -81,16 +114,21 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
       }
     } catch (error: any) {
       setUploadStatus('error');
-      
+      const status = error?.response?.status;
+      setUploadErrorCode(status || null);
+
       let errorMessage = error.message || 'Error al subir comprobante';
-      
-      // Agregar contexto específico para diferentes errores
-      if (error.message?.includes('token') || error.response?.status === 401) {
-        errorMessage = '⚠️ Backend necesita ruta pública. Contacta al administrador.';
-      } else if (error.message?.includes('not found')) {
-        errorMessage = 'Orden no encontrada. Verifica el código de orden.';
+
+      if (status === 401) {
+        errorMessage = 'Necesitas iniciar sesión para subir este comprobante.';
+      } else if (status === 404) {
+        errorMessage = 'No se encontró la orden. Verifica el número de pedido.';
+      } else if (status === 400) {
+        errorMessage = 'Archivo inválido. Sube una imagen o PDF válido.';
+      } else if (error.message?.includes('token')) {
+        errorMessage = 'Problema de autenticación. Inicia sesión e inténtalo de nuevo.';
       }
-      
+
       setUploadMessage(errorMessage);
     }
   };
@@ -147,12 +185,24 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-green-200">
                 <div>
                   <p className="text-xs text-gray-500">Estado</p>
-                  <p className="font-semibold text-green-600">Confirmado</p>
+                  <p className="font-semibold text-green-600">{orderData?.status || 'Confirmado'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Estimado</p>
                   <p className="font-semibold text-gray-700">3-5 días</p>
                 </div>
+                {orderData?.delivery_type && (
+                  <div>
+                    <p className="text-xs text-gray-500">Método</p>
+                    <p className="font-semibold text-gray-700">{orderData.delivery_type === 'PICKUP' ? 'Recojo en tienda' : 'Delivery'}</p>
+                  </div>
+                )}
+                {orderData?.pickup_code && (
+                  <div>
+                    <p className="text-xs text-gray-500">Código de Recojo</p>
+                    <p className="font-mono text-gray-900">{orderData.pickup_code}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -192,12 +242,32 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
               }`}>
                 <p className="text-sm">{uploadMessage}</p>
                 {uploadStatus === 'error' && (
-                  <button
-                    onClick={handleUploadProof}
-                    className="mt-2 text-sm underline hover:no-underline"
-                  >
-                    Intentar de nuevo
-                  </button>
+                  <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleUploadProof}
+                        className="text-sm bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded"
+                      >
+                        Intentar de nuevo
+                      </button>
+                      <button
+                        onClick={() => window.open(`https://wa.me/51999999999?text=${encodeURIComponent('Necesito ayuda con mi pedido ' + orderId)}`,'_blank')}
+                        className="text-sm bg-transparent underline text-blue-800 ml-2"
+                      >
+                        Contactar soporte
+                      </button>
+                    </div>
+                    {uploadErrorCode === 401 && (
+                      <div>
+                        <button
+                          onClick={() => navigate('/login')}
+                          className="text-sm bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded"
+                        >
+                          Iniciar sesión
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}

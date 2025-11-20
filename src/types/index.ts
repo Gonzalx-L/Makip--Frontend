@@ -55,13 +55,14 @@ export interface Product {
 // 💡 NUEVO: Tipo para el método de entrega
 export type DeliveryMethod = 'DELIVERY' | 'PICKUP';
 
-// Estados de pedido (ENUM)
+// Estados de pedido (ENUM) - Deben coincidir EXACTAMENTE con el backend
 export type OrderStatus =
   | "NO_PAGADO"
   | "PAGO_EN_VERIFICACION"
   | "PENDIENTE"
   | "EN_EJECUCION"
   | "TERMINADO"
+  | "COMPLETADO"
   | "CANCELADO";
 
 // Datos de personalización por item (JSON)

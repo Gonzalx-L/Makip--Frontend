@@ -8,6 +8,12 @@ export interface PaymentProofResponse {
     payment_proof_url: string;
   };
   isApproved: boolean;
+  info?: {
+    fecha?: string;
+    codigoOperacion?: string;
+    codVerificacion?: string;
+  };
+  errors?: string[];
 }
 
 /**
@@ -32,18 +38,18 @@ export async function uploadPaymentProof(
     );
     
     return response.data;
-  } catch (error: any) {
-    console.error('Error uploading payment proof:', error);
-    
-    // Manejar errores específicos
-    if (error.response?.status === 401) {
+  } catch (error: unknown) {
+    const err = error as { response?: { status?: number; data?: { message?: string } } };
+    console.error('Error uploading payment proof:', err);
+
+    if (err.response?.status === 401) {
       throw new Error('Debes iniciar sesión para subir comprobantes');
-    } else if (error.response?.status === 404) {
+    } else if (err.response?.status === 404) {
       throw new Error('Orden no encontrada o no te pertenece');
-    } else if (error.response?.status === 400) {
+    } else if (err.response?.status === 400) {
       throw new Error('Archivo inválido. Solo se permiten imágenes y PDFs');
     } else {
-      throw new Error(error.response?.data?.message || 'Error al subir comprobante');
+      throw new Error(err.response?.data?.message || 'Error al subir comprobante');
     }
   }
 }
@@ -71,18 +77,18 @@ export async function uploadPaymentProofPublic(
     );
     
     return response.data;
-  } catch (error: any) {
-    console.error('Error uploading payment proof (public):', error);
-    
-    // Manejar errores específicos para rutas públicas
-    if (error.response?.status === 404) {
+  } catch (error: unknown) {
+    const err = error as { response?: { status?: number; data?: { message?: string } } };
+    console.error('Error uploading payment proof (public):', err);
+
+    if (err.response?.status === 404) {
       throw new Error('Orden no encontrada. Verifica el código de orden.');
-    } else if (error.response?.status === 400) {
+    } else if (err.response?.status === 400) {
       throw new Error('Archivo inválido. Solo se permiten imágenes y PDFs');
-    } else if (error.response?.status === 403) {
+    } else if (err.response?.status === 403) {
       throw new Error('Esta orden ya fue procesada o no permite cambios');
     } else {
-      throw new Error(error.response?.data?.message || 'Error al subir comprobante');
+      throw new Error(err.response?.data?.message || 'Error al subir comprobante');
     }
   }
 }
