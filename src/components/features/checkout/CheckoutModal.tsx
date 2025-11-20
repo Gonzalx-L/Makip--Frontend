@@ -123,6 +123,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         })),
         delivery_type: 'PICKUP',
         // Incluir datos del cliente para usuarios no autenticados
+        // Incluir datos del cliente para usuarios no autenticados
         ...(!isAuthenticated && {
           client_data: {
             full_name: shippingData.fullName,
