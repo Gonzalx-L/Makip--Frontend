@@ -90,8 +90,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       // Si es recojo en tienda, procesar directamente sin necesidad de comprobante
       handleStorePickupOrder();
     } else {
-      // Si es delivery, ir directamente al pago (se coordina por WhatsApp)
-      setStep('image');
+      // Si es delivery, mostrar el formulario de dirección para que el usuario
+      // complete sus datos y luego avance al paso de pago.
+      setStep('delivery-method');
     }
   };
 
