@@ -3,10 +3,10 @@ import { useCartStore } from '../../../store/cartStore';
 import { FaTimes, FaUpload } from 'react-icons/fa';
 import { CheckoutLoading } from './CheckoutLoading';
 import { orderService, type CreateOrderRequest, type Order } from '../../../services/orderService';
-import { uploadPaymentProofPublic } from '../../../services/paymentProofService';
-import { authService } from '../../../services/authService';
+import { uploadPaymentProofPublic, uploadPaymentProof } from '../../../services/paymentProofService';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import QRImage from '../../../assets/QR.png';
+import { useNavigate } from 'react-router-dom';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -28,6 +28,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [orderResult, setOrderResult] = useState<Order | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formErrorCode, setFormErrorCode] = useState<number | null>(null);
+  const navigate = useNavigate();
   
   // Estados del formulario - Vacíos para que el usuario los rellene
   const [shippingData, setShippingData] = useState({
@@ -87,8 +90,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       // Si es recojo en tienda, procesar directamente sin necesidad de comprobante
       handleStorePickupOrder();
     } else {
-      // Si es delivery, ir directamente al pago (se coordina por WhatsApp)
-      setStep('image');
+      // Si es delivery, mostrar el formulario de dirección para que el usuario
+      // complete sus datos y luego avance al paso de pago.
+      setStep('delivery-method');
     }
   };
 
@@ -159,7 +163,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     } catch (error: any) {
       console.error('Error creating store pickup order:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Error al procesar la orden';
-      alert(`Error: ${errorMessage}. Inténtalo de nuevo.`);
+      setFormError(errorMessage);
+      setFormErrorCode(error.response?.status || null);
     } finally {
       setLoading(false);
     }
@@ -167,6 +172,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const handleImageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     
     if (!selectedImage) {
       alert('Por favor, sube el comprobante de pago');
@@ -207,27 +213,82 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         : await orderService.createPublicOrder(orderData);
       
       setLoadingStep('validating');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simular procesamiento
-      
-      setLoadingStep('completing');
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Subir comprobante de pago si hay imagen
       if (selectedImage) {
         try {
-          await uploadPaymentProofPublic(response.order_id, selectedImage);
-        } catch (uploadError) {
-          console.warn('Error uploading payment proof:', uploadError);
-          // Continuar aunque falle la subida del comprobante
+          const uploadResult = isAuthenticated 
+            ? await uploadPaymentProof(response.order_id, selectedImage)
+            : await uploadPaymentProofPublic(response.order_id, selectedImage);
+          
+          setLoadingStep('completing');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Verificar si el pago fue aprobado
+          console.log('📋 Respuesta del backend:', uploadResult);
+          
+          if (uploadResult.isApproved === true) {
+            // Pago validado exitosamente por OCR
+            console.log('✅ Pago aprobado automáticamente');
+            onPaymentSuccess(response.order_id.toString());
+          } else {
+            // Pago en verificación manual
+            console.log('⚠️ Pago requiere verificación manual');
+            console.log('Errores:', uploadResult.errors);
+            
+            const errors = uploadResult.errors || [];
+            let friendlyMessage = `Tu orden #${response.order_id} fue creada exitosamente. Sin embargo, necesitamos verificar tu comprobante de pago manualmente.\n\n`;
+            
+            // Analizar errores específicos del array
+            const hasMontoError = errors.some(e => e.includes('monto no coincide'));
+            const hasFechaError = errors.some(e => e.includes('fecha') || e.includes('hoy'));
+            const hasNombreError = errors.some(e => e.includes('nombre'));
+            
+            if (hasMontoError) {
+              const expectedAmount = getTotalPrice().toFixed(2);
+              friendlyMessage += `⚠️ El monto yapeado no coincide con el total de tu orden (S/ ${expectedAmount}).\n\n`;
+              friendlyMessage += `Si enviaste un monto diferente o el comprobante es de otra transacción, por favor contáctanos por WhatsApp para resolverlo.\n\n`;
+            } else if (hasFechaError) {
+              friendlyMessage += `⚠️ La fecha del comprobante no corresponde al día de hoy.\n\n`;
+              friendlyMessage += `Asegúrate de enviar un comprobante de pago realizado el día de hoy.\n\n`;
+            } else if (hasNombreError) {
+              friendlyMessage += `⚠️ El nombre del destinatario en el comprobante no coincide con nuestros datos.\n\n`;
+              friendlyMessage += `Verifica que hayas enviado el pago a la cuenta correcta de Makip.\n\n`;
+            } else if (errors.length > 0) {
+              friendlyMessage += `⚠️ Problemas detectados:\n${errors.join('\n')}\n\n`;
+            } else {
+              friendlyMessage += `⚠️ No pudimos validar automáticamente tu comprobante.\n\n`;
+            }
+            
+            friendlyMessage += `📱 Contáctanos por WhatsApp para una verificación rápida:\n`;
+            friendlyMessage += `https://wa.me/51981266608?text=Hola,%20necesito%20ayuda%20con%20mi%20orden%20%23${response.order_id}`;
+            
+            setFormError(friendlyMessage);
+            setFormErrorCode(400);
+            setLoading(false);
+          }
+        } catch (uploadError: unknown) {
+          const err = uploadError as { message?: string };
+          console.error('Error uploading payment proof:', err);
+          setFormError(
+            `Orden creada (#${response.order_id}) pero hubo un error al subir el comprobante: ${err.message || 'Error desconocido'}. ` +
+            `Por favor, intenta subirlo nuevamente desde tu historial de pedidos.`
+          );
+          setLoading(false);
         }
+      } else {
+        // No hay comprobante (recojo en tienda)
+        setLoadingStep('completing');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        onPaymentSuccess(response.order_id.toString());
       }
       
-      onPaymentSuccess(response.order_id.toString());
-      
-    } catch (error: any) {
-      console.error('Error creating order:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Error al procesar la orden';
-      alert(`Error: ${errorMessage}. Inténtalo de nuevo.`);
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      console.error('Error creating order:', err);
+      const errorMessage = err.response?.data?.message || 'Error al procesar la orden';
+      setFormError(errorMessage);
+      setFormErrorCode(err.response?.status || null);
     } finally {
       setLoading(false);
     }
@@ -304,6 +365,43 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         </div>
 
         <div className="p-6">
+          {formError && (
+            <div className={`mb-4 p-4 rounded-lg border ${
+              formErrorCode === 400 
+                ? 'bg-yellow-50 border-yellow-300 text-yellow-900' 
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}>
+              <div className="flex flex-col gap-3">
+                <div className="text-sm whitespace-pre-line">{formError}</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {formErrorCode === 401 && (
+                    <button 
+                      onClick={() => navigate('/login')} 
+                      className="bg-teal-600 text-white px-3 py-1.5 rounded text-sm hover:bg-teal-700 transition"
+                    >
+                      Iniciar sesión
+                    </button>
+                  )}
+                  {formErrorCode === 400 && (
+                    <a 
+                      href={formError.includes('https://wa.me') ? formError.split('\n').find(line => line.includes('https://wa.me'))?.trim() : 'https://wa.me/51981266608'} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700 transition inline-flex items-center gap-1"
+                    >
+                      📱 Contactar por WhatsApp
+                    </a>
+                  )}
+                  <button 
+                    onClick={() => { setFormError(null); setFormErrorCode(null); }} 
+                    className="text-sm px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100 transition"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {step === 'shipping' ? (
             <div>
               {/* Formulario de Cliente - DEMO VERSION */}

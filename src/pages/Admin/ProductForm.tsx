@@ -559,12 +559,13 @@ const ProductForm: React.FC = () => {
 
               <div className='flex items-center gap-2'>
                 <input
+                  className='h-5 w-5'
                   type='checkbox'
                   name='is_active'
                   checked={formData.is_active}
                   onChange={handleChange}
                 />
-                <span className='text-sm'>Producto activo</span>
+                <span className='text-2x1'>PRODUCTO ACTIVO</span>
               </div>
 
               {/* Imagen */}

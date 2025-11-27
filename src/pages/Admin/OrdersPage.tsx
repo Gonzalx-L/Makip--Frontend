@@ -129,6 +129,102 @@ const OrdersPage: React.FC = () => {
     setDeliveryType('ALL');
   };
 
+  // Cambiar estado de orden con notificaciones
+  const handleChangeStatus = async (orderId: number, newStatus: OrderStatus) => {
+    const confirmMsg = 
+      newStatus === 'EN_EJECUCION' ? '🏭 ¿Iniciar producción de esta orden?\n\n✅ Se enviará correo y WhatsApp al cliente' :
+      newStatus === 'TERMINADO' ? '✅ ¿Marcar como terminado?\n\n📧 El cliente será notificado que su pedido está listo' :
+      newStatus === 'COMPLETADO' ? '📦 ¿Marcar como completado/entregado?\n\n🎉 Se enviará confirmación final al cliente' :
+      '¿Cambiar el estado de esta orden?';
+    
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      // 🔍 LOGS DE DEBUGGING DETALLADOS
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🔍 [DEBUG] INICIANDO CAMBIO DE ESTADO');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('1️⃣ ID de orden:', orderId);
+      console.log('2️⃣ Nuevo estado (EXACTO):', newStatus);
+      console.log('3️⃣ Tipo de dato:', typeof newStatus);
+      console.log('4️⃣ Tiene guion bajo:', newStatus.includes('_') ? '✅ SÍ' : '❌ NO');
+      console.log('5️⃣ Es mayúscula:', newStatus === newStatus.toUpperCase() ? '✅ SÍ' : '❌ NO');
+      console.log('6️⃣ Body JSON:', JSON.stringify({ newStatus }, null, 2));
+      console.log('7️⃣ URL:', `http://localhost:4000/api/v1/admin/orders/${orderId}/status`);
+      console.log('8️⃣ Token:', localStorage.getItem('adminToken') ? '✅ Existe' : '❌ No existe');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      // Endpoint correcto: PATCH /api/v1/admin/orders/:id/status
+      const response = await apiClient.patch(`/admin/orders/${orderId}/status`, {
+        newStatus: newStatus
+      });
+      
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ RESPUESTA DEL SERVIDOR:');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📦 Respuesta completa:', response.data);
+      console.log('📧 Notificaciones enviadas:', response.data?.notifications_sent ? '✅ SÍ' : '❌ NO');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      // Verificar si las notificaciones fueron enviadas
+      const notificationsSent = response.data?.notifications_sent || false;
+      
+      // Recargar todas las órdenes para obtener el estado actualizado del servidor
+      const refreshResponse = deliveryType === 'DELIVERY' 
+        ? await apiClient.get<{ message: string; deliveryType: string; orders: Order[] }>('/admin/orders/delivery/DELIVERY')
+        : deliveryType === 'PICKUP'
+          ? await apiClient.get<{ message: string; deliveryType: string; orders: Order[] }>('/admin/orders/delivery/PICKUP')
+          : await apiClient.get<Order[]>('/admin/orders');
+      
+      const updatedOrders = deliveryType !== 'ALL' 
+        ? (refreshResponse.data as { orders: Order[] }).orders 
+        : (refreshResponse.data as Order[]);
+      
+      setOrders(updatedOrders);
+      
+      // Mensaje de éxito diferenciado
+      if (notificationsSent) {
+        alert(`✅ Estado actualizado exitosamente\n\n📧 Correo enviado al cliente\n📱 WhatsApp enviado\n\n🔄 Lista actualizada`);
+      } else {
+        alert(`✅ Estado actualizado exitosamente\n\n⚠️ Notificaciones no configuradas o no enviadas\n\n🔄 Lista actualizada`);
+      }
+      
+    } catch (err: any) {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('❌ ERROR AL CAMBIAR ESTADO:');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('🔴 Error completo:', err);
+      console.error('🔴 Respuesta del servidor:', err.response?.data);
+      console.error('🔴 Status HTTP:', err.response?.status);
+      console.error('🔴 Mensaje:', err.response?.data?.message);
+      console.error('🔴 Estados válidos del backend:', err.response?.data?.validStatuses);
+      console.error('🔴 Estado actual según backend:', err.response?.data?.currentStatus);
+      console.error('🔴 Transiciones permitidas:', err.response?.data?.allowedTransitions);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      const errorMsg = err.response?.data?.message || err.message || 'Error desconocido';
+      
+      // Mostrar información detallada si es error 400
+      if (err.response?.status === 400) {
+        const data = err.response.data;
+        let detailedMsg = `❌ ${errorMsg}\n\n`;
+        
+        if (data.validStatuses) {
+          detailedMsg += `📋 Estados válidos:\n${data.validStatuses.join('\n')}\n\n`;
+        }
+        
+        if (data.currentStatus && data.allowedTransitions) {
+          detailedMsg += `🔄 Estado actual: ${data.currentStatus}\n`;
+          detailedMsg += `✅ Transiciones permitidas:\n${data.allowedTransitions.join('\n')}`;
+        }
+        
+        alert(detailedMsg);
+      } else {
+        alert(`❌ Error al actualizar el estado:\n\n${errorMsg}\n\n💡 Abre la consola del navegador (F12) para más detalles`);
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className='p-10 flex justify-center'>
@@ -290,7 +386,7 @@ const OrdersPage: React.FC = () => {
                   Código Recojo
                 </th>
                 <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase'>
-                  Acciones
+                  Ver
                 </th>
               </tr>
             </thead>
@@ -339,7 +435,7 @@ const OrdersPage: React.FC = () => {
                     <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
                       <button
                         onClick={() => handleViewDetails(order.order_id)}
-                        className='text-blue-600 hover:text-blue-800 flex items-center gap-1'>
+                        className='text-blue-600 hover:text-blue-800 flex items-center gap-1 justify-end'>
                         <Eye size={16} />
                         Ver
                       </button>
