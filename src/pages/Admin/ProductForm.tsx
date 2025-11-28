@@ -652,7 +652,7 @@ const ProductForm: React.FC = () => {
                 className='h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
               />
               <label htmlFor='allows_image' className='text-sm font-medium text-gray-700'>
-                Permitir subir imagen personalizada
+                Permitir subir imagen personalizada y generacion de imagen por I.A
               </label>
             </div>
           </div>

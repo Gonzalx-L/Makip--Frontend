@@ -63,7 +63,14 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
 
   const handleGoToTracking = () => {
     onClose();
-    navigate(`/tracking?order=${orderId}`);
+    
+    // Si es un pedido de recojo (PICKUP), ir al inicio en lugar de tracking
+    if (orderData?.delivery_type === 'PICKUP') {
+      navigate('/');
+    } else {
+      // Solo para delivery ir al tracking
+      navigate(`/tracking?order=${orderId}`);
+    }
   };
 
   const handleWhatsAppShare = () => {
@@ -315,7 +322,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
             className="w-full bg-linear-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-500 focus:ring-opacity-50 shadow-lg"
           >
             <FaEye className="inline mr-2" />
-            Ver Estado del Pedido
+            {orderData?.delivery_type === 'PICKUP' ? 'Continuar Comprando' : 'Ver Estado del Pedido'}
           </button>
 
           {/* Botones secundarios */}
