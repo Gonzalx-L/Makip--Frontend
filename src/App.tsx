@@ -25,6 +25,7 @@ import RegisterPage from "./pages/public/RegisterPage";
 import CartPage from "./pages/public/CartPage";
 import ProductDetailPage from "./pages/public/ProductDetailPage";
 import ContactPage from "./pages/public/ContactPage";
+import MisPedidosPage from "./pages/public/MisPedidosPage";
 import { TestConnection } from "./pages/TestConnection";
 
 // --- Páginas Admin ---
@@ -65,6 +66,7 @@ function App() {
               <Route path='/tracking' element={<TrackingPage />} />
               <Route path='/nosotros' element={<AboutPage />} />
               <Route path='/contacto' element={<ContactPage />} />
+              <Route path='/mis-pedidos' element={<MisPedidosPage />} />
               <Route path='/cart' element={<CartPage />} />
               <Route path='/test-connection' element={<TestConnection />} />
             </Route>
