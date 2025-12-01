@@ -5,6 +5,8 @@ import { productService } from '../../services/productService';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ImageUpload from '../../components/shared/ImageUpload';
+import { uploadLogo, validateLogoFile } from '../../services/logoUploadService';
+import { Upload, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { ProductVariants, PersonalizationData, Product } from '../../types';
 
 // Datos mock para cuando no hay productos en la BD
@@ -42,7 +44,9 @@ const mockProducts: Product[] = [
     },
     personalization_metadata: {
       cost: 2000,
-      max_text_length: 15
+      max_text_length: 15,
+      allows_image: true,
+      allowed_formats: ['png']
     },
     is_active: true,
     category_name: 'Accesorios'
@@ -104,6 +108,12 @@ const ProductDetailPage: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   
+  // Estados para el upload de logos
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
+  const [logoUploadStatus, setLogoUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [logoUploadError, setLogoUploadError] = useState<string>('');
+  
   // Hook de efecto para validar campos al cargar el producto
   useEffect(() => {
     // La validación se ejecutará cuando el usuario haga clic en "Agregar al carrito"
@@ -128,6 +138,14 @@ const ProductDetailPage: React.FC = () => {
 
   // Usar producto del backend si existe, sino usar mock
   const product = backendProduct || mockProducts.find(p => p.product_id === Number(id));
+  
+  // Debug: Ver qué datos tiene el producto
+  useEffect(() => {
+    if (product) {
+      console.log('📦 Datos del producto:', product);
+      console.log('🎨 Personalization metadata:', product.personalization_metadata);
+    }
+  }, [product]);
 
   if (loading) {
     return (
@@ -206,6 +224,66 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
+  // Manejar selección de archivo de logo
+  const handleLogoFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar el archivo
+    const validation = validateLogoFile(file);
+    if (!validation.valid) {
+      setLogoUploadError(validation.error || 'Archivo inválido');
+      setLogoUploadStatus('error');
+      return;
+    }
+
+    // Guardar el archivo y crear preview
+    setLogoFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setLogoPreview(previewUrl);
+    
+    // Subir automáticamente
+    await uploadLogoToCloud(file);
+  };
+
+  // Subir logo a Google Cloud Storage
+  const uploadLogoToCloud = async (file: File) => {
+    setLogoUploadStatus('uploading');
+    setLogoUploadError('');
+
+    try {
+      const response = await uploadLogo(file);
+      
+      // Guardar la URL en personalization_data
+      setPersonalization(prev => ({
+        ...prev,
+        image_url: response.publicUrl
+      }));
+      
+      setLogoUploadStatus('success');
+      
+      // Limpiar errores de validación
+      if (validationErrors.includes('Logo personalizado')) {
+        setValidationErrors(prev => prev.filter(e => e !== 'Logo personalizado'));
+      }
+    } catch (error: any) {
+      setLogoUploadError(error.message);
+      setLogoUploadStatus('error');
+    }
+  };
+
+  // Eliminar logo seleccionado
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview('');
+    setLogoUploadStatus('idle');
+    setLogoUploadError('');
+    setPersonalization(prev => {
+      const { image_url, ...rest } = prev;
+      return rest;
+    });
+  };
+
   // Función helper para formatear precios (soles)
   const formatPrice = (priceInSoles: number) => {
     return priceInSoles.toFixed(2);
@@ -264,11 +342,18 @@ const ProductDetailPage: React.FC = () => {
     }
     
     // Validar personalización si está disponible
-    if (product.personalization_metadata && 
-        product.personalization_metadata.max_text_length && 
-        product.personalization_metadata.max_text_length > 0) {
-      if (!personalization.text || personalization.text.trim() === '') {
-        missingFields.push('Texto personalizado');
+    if (product.personalization_metadata) {
+      // Validar texto personalizado
+      if (product.personalization_metadata.max_text_length && 
+          product.personalization_metadata.max_text_length > 0) {
+        if (!personalization.text || personalization.text.trim() === '') {
+          missingFields.push('Texto personalizado');
+        }
+      }
+      
+      // Validar logo si allows_image está habilitado
+      if (product.personalization_metadata.allows_image && !personalization.image_url) {
+        missingFields.push('Logo personalizado');
       }
     }
     
@@ -395,41 +480,123 @@ const ProductDetailPage: React.FC = () => {
               <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Personalización</h3>
               
               {/* Texto personalizado */}
-              <div className="mb-4">
-                <label className={`block text-sm font-medium mb-2 ${validationErrors.includes('Texto personalizado') ? 'text-red-700' : 'text-gray-700'}`}>
-                  Texto personalizado: <span className="text-teal-500">*</span>
-                  {validationErrors.includes('Texto personalizado') && <span className="text-teal-600 text-xs ml-1">(Requerido)</span>}
-                </label>
-                <input
-                  type="text"
-                  value={personalization.text || ''}
-                  onChange={(e) => handlePersonalizationChange('text', e.target.value)}
-                  maxLength={product.personalization_metadata.max_text_length || 50}
-                  className={`w-full border rounded-lg px-3 py-2 focus:outline-none ${
-                    validationErrors.includes('Texto personalizado')
-                      ? 'border-red-300 bg-red-50 focus:border-red-500'
-                      : 'border-gray-300 focus:border-blue-500'
-                  }`}
-                  placeholder="Ingresa tu texto aquí..."
-                />
-                {product.personalization_metadata.cost && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Costo adicional: +S/ {formatPrice(typeof product.personalization_metadata.cost === 'number' ? product.personalization_metadata.cost : parseFloat(product.personalization_metadata.cost))}
-                  </p>
-                )}
-              </div>
+              {product.personalization_metadata.max_text_length && product.personalization_metadata.max_text_length > 0 && (
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium mb-2 ${validationErrors.includes('Texto personalizado') ? 'text-red-700' : 'text-gray-700'}`}>
+                    Texto personalizado: <span className="text-teal-500">*</span>
+                    {validationErrors.includes('Texto personalizado') && <span className="text-teal-600 text-xs ml-1">(Requerido)</span>}
+                  </label>
+                  <input
+                    type="text"
+                    value={personalization.text || ''}
+                    onChange={(e) => handlePersonalizationChange('text', e.target.value)}
+                    maxLength={product.personalization_metadata.max_text_length || 50}
+                    className={`w-full border rounded-lg px-3 py-2 focus:outline-none ${
+                      validationErrors.includes('Texto personalizado')
+                        ? 'border-red-300 bg-red-50 focus:border-red-500'
+                        : 'border-gray-300 focus:border-blue-500'
+                    }`}
+                    placeholder="Ingresa tu texto aquí..."
+                  />
+                  {product.personalization_metadata.cost && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Costo adicional: +S/ {formatPrice(typeof product.personalization_metadata.cost === 'number' ? product.personalization_metadata.cost : parseFloat(product.personalization_metadata.cost))}
+                    </p>
+                  )}
+                </div>
+              )}
 
-              {/* Imagen personalizada */}
+              {/* Upload de logo PNG */}
               {product.personalization_metadata.allows_image && (
                 <div className="mb-4">
-                  <ImageUpload
-                    onImageUpload={(imageUrl) => handlePersonalizationChange('image_url', imageUrl)}
-                    onImageRemove={() => handlePersonalizationChange('image_url', '')}
-                    currentImageUrl={personalization.image_url || ''}
-                    label="Imagen personalizada"
-                    helpText="Sube tu logo o imagen para personalizar el producto (JPG, PNG, GIF - Máx. 5MB)"
-                    required={false}
-                  />
+                  <label className={`block text-sm font-medium mb-2 ${validationErrors.includes('Logo personalizado') ? 'text-red-700' : 'text-gray-700'}`}>
+                    🎨 Sube tu logo (PNG): <span className="text-teal-500">*</span>
+                    {validationErrors.includes('Logo personalizado') && <span className="text-teal-600 text-xs ml-1">(Requerido)</span>}
+                  </label>
+                  
+                  {!logoFile ? (
+                    <div className={`border-2 border-dashed rounded-lg p-6 text-center ${
+                      validationErrors.includes('Logo personalizado')
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-gray-300 hover:border-teal-400 bg-gray-50'
+                    }`}>
+                      <input
+                        type="file"
+                        accept=".png,image/png"
+                        onChange={handleLogoFileSelect}
+                        className="hidden"
+                        id="logo-upload"
+                      />
+                      <label
+                        htmlFor="logo-upload"
+                        className="cursor-pointer flex flex-col items-center"
+                      >
+                        <Upload className="w-12 h-12 text-gray-400 mb-2" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Haz clic para seleccionar un archivo PNG
+                        </span>
+                        <span className="text-xs text-gray-500 mt-1">
+                          Solo archivos PNG • Máx. 5MB
+                        </span>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg p-4 bg-white">
+                      {/* Estado de carga */}
+                      {logoUploadStatus === 'uploading' && (
+                        <div className="flex items-center gap-3 mb-3 p-3 bg-blue-50 rounded-lg">
+                          <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                          <span className="text-sm text-blue-700">Subiendo logo...</span>
+                        </div>
+                      )}
+                      
+                      {/* Estado de éxito */}
+                      {logoUploadStatus === 'success' && (
+                        <div className="flex items-center gap-3 mb-3 p-3 bg-green-50 rounded-lg">
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                          <span className="text-sm text-green-700">¡Logo subido exitosamente!</span>
+                        </div>
+                      )}
+                      
+                      {/* Estado de error */}
+                      {logoUploadStatus === 'error' && (
+                        <div className="flex items-center gap-3 mb-3 p-3 bg-red-50 rounded-lg">
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                          <span className="text-sm text-red-700">{logoUploadError}</span>
+                        </div>
+                      )}
+                      
+                      {/* Preview del logo */}
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          <img
+                            src={logoPreview}
+                            alt="Preview del logo"
+                            className="w-32 h-32 object-contain border border-gray-200 rounded-lg bg-gray-50"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {logoFile.name}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {(logoFile.size / 1024).toFixed(2)} KB
+                          </p>
+                          <button
+                            onClick={handleRemoveLogo}
+                            className="mt-2 flex items-center gap-1 text-sm text-red-600 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-gray-500 mt-2">
+                    📌 Tu logo se subirá automáticamente a Google Cloud Storage
+                  </p>
                 </div>
               )}
             </div>
