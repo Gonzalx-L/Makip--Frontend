@@ -175,3 +175,6 @@ export interface AuthResponse {
   client: User; // Asumiendo que ya tienes una interfaz User definida
   isNewUser?: boolean;
 }
+
+// Re-export tracking types
+export type { TrackingInfo, TrackingUpdate } from './tracking';
