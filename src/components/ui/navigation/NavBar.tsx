@@ -92,7 +92,6 @@ export const NavBar = () => {
                   : "text-blue-100 px-3 py-2 hover:text-white transition-colors flex items-center space-x-1"
                 }
               >
-                <FaClipboardList className="text-sm" />
                 <span>PEDIDOS</span>
               </Link>
             )}

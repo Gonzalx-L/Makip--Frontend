@@ -80,12 +80,12 @@ const ProductsPage: React.FC = () => {
           
           {/* Filtro de Categoría */}
           <div className="flex-1">
-            <label htmlFor="categoria1" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="categoria1" className="block text-sm font-medium text-gray-700 mb-2">
               Categoría
             </label>
             <select 
               id="categoria1" 
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-2.5 border border-gray-300 rounded-md"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
@@ -98,13 +98,13 @@ const ProductsPage: React.FC = () => {
           </div>
 
           {/* Botón limpiar filtros */}
-          <div className="flex items-end">
+          <div className="flex items-end justify-center md:justify-start">
             <button
               onClick={() => {
                 setMaxPrice(500);
                 setSelectedCategory('Todas');
               }}
-              className="w-full md:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm font-medium"
+              className="w-full md:w-auto px-6 py-2.5 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors text-sm font-medium whitespace-nowrap"
             >
               Limpiar Filtros
             </button>
