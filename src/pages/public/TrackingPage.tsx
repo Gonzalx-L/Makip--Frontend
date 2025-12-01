@@ -29,7 +29,7 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
     updates.push({
       status: 'Verificando Pago',
       description: 'Comprobante recibido, verificando pago automáticamente',
-      date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+      date: new Date(order.created_at).toLocaleString('es-ES'),
       isComplete: false,
       icon: 'payment',
       color: 'blue'
@@ -52,10 +52,10 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
       updates.push({
         status: 'Listo para Recojo',
         description: `Tu pedido está listo para recoger. Código: ${order.pickup_code || 'Por generar'}`,
-        date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
-        isComplete: status === 'COMPLETADO',
+        date: new Date(order.created_at).toLocaleString('es-ES'),
+        isComplete: false,
         icon: 'pickup',
-        color: status === 'COMPLETADO' ? 'green' : 'blue'
+        color: 'blue'
       });
     }
   } else {
@@ -66,7 +66,7 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
       updates.push({
         status: 'En Producción',
         description: 'Tu pedido personalizado está siendo creado',
-        date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+        date: new Date(order.created_at).toLocaleString('es-ES'),
         isComplete: true,
         icon: 'production',
         color: 'blue'
@@ -78,7 +78,7 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
       updates.push({
         status: 'Producción Finalizada',
         description: 'Tu pedido ha sido completado y está listo',
-        date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+        date: new Date(order.created_at).toLocaleString('es-ES'),
         isComplete: true,
         icon: 'packaging',
         color: 'green'
@@ -91,7 +91,7 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
         updates.push({
           status: 'Listo para Recojo',
           description: `Tu pedido está listo. Código: ${order.pickup_code || 'N/A'}`,
-          date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+          date: new Date(order.created_at).toLocaleString('es-ES'),
           isComplete: true,
           icon: 'pickup',
           color: 'green'
@@ -100,7 +100,7 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
         updates.push({
           status: 'Entregado',
           description: 'Pedido entregado exitosamente',
-          date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+          date: new Date(order.created_at).toLocaleString('es-ES'),
           isComplete: true,
           icon: 'delivery',
           color: 'green'
@@ -152,7 +152,7 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
     delivery_type: order.delivery_type,
     pickup_code: order.pickup_code,
     currentStatus: status as any,
-    lastUpdated: order.updated_at || order.created_at,
+    lastUpdated: order.created_at,
     totalPrice: typeof order.total_price === 'number' ? order.total_price : undefined,
     clientName: undefined
   };
@@ -466,13 +466,6 @@ const TrackingPage: React.FC = () => {
               {finalTrackingInfo.lastUpdated && (
                 <div className="mt-4 text-xs sm:text-sm text-gray-500 text-center">
                   Última actualización: {new Date(finalTrackingInfo.lastUpdated).toLocaleString('es-ES')}
-                </div>
-              )}
-
-              {/* Debug info for development */}
-              {import.meta.env.DEV && finalTrackingInfo.currentStatus && (
-                <div className="mt-4 p-3 bg-gray-100 rounded text-xs sm:text-sm">
-                  <strong>Debug:</strong> Estado actual del backend: <code className="text-xs">{finalTrackingInfo.currentStatus}</code>
                 </div>
               )}
             </div>
