@@ -13,12 +13,31 @@ import { FaBox, FaCheckCircle, FaClock, FaSpinner, FaTimesCircle } from 'react-i
 const mapOrderToTracking = (order: Order): TrackingInfo => {
   const updates = [];
   const status = order.status;
+  const isPickup = order.delivery_type === 'PICKUP';
   
-  // Paso 1: Pedido Confirmado
-  if (status !== 'NO_PAGADO' && status !== 'PAGO_EN_VERIFICACION') {
+  // Paso 1: Estado de Pago
+  if (status === 'NO_PAGADO') {
     updates.push({
-      status: 'Confirmado',
-      description: 'Pedido confirmado y pago aprobado',
+      status: 'Esperando Pago',
+      description: isPickup ? 'Pendiente: Subir comprobante de pago' : 'Pendiente: Confirmar pago para proceder',
+      date: new Date(order.created_at).toLocaleString('es-ES'),
+      isComplete: false,
+      icon: 'payment',
+      color: 'orange'
+    });
+  } else if (status === 'PAGO_EN_VERIFICACION') {
+    updates.push({
+      status: 'Verificando Pago',
+      description: 'Comprobante recibido, verificando pago automáticamente',
+      date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+      isComplete: false,
+      icon: 'payment',
+      color: 'blue'
+    });
+  } else if (status !== 'NO_PAGADO' && status !== 'PAGO_EN_VERIFICACION') {
+    updates.push({
+      status: 'Pago Confirmado',
+      description: 'Pago verificado y aprobado exitosamente',
       date: new Date(order.created_at).toLocaleString('es-ES'),
       isComplete: true,
       icon: 'payment',
@@ -26,50 +45,67 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
     });
   }
 
-  // Paso 2: En Producción
-  if (status === 'EN_EJECUCION' || status === 'TERMINADO' || status === 'COMPLETADO') {
-    updates.push({
-      status: 'En Producción',
-      description: 'Tu pedido está siendo producido',
-      date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
-      isComplete: true,
-      icon: 'production',
-      color: 'blue'
-    });
-  }
-
-  // Paso 3: Producción Terminada
-  if (status === 'TERMINADO' || status === 'COMPLETADO') {
-    updates.push({
-      status: 'Producción Finalizada',
-      description: 'Tu pedido ha sido completado y empaquetado',
-      date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
-      isComplete: true,
-      icon: 'packaging',
-      color: 'green'
-    });
-  }
-
-  // Paso 4: Entregado/Listo para Recojo
-  if (status === 'COMPLETADO') {
-    if (order.delivery_type === 'PICKUP') {
+  // Para PICKUP: Solo hasta aquí si no está en producción
+  if (isPickup && (status === 'NO_PAGADO' || status === 'PAGO_EN_VERIFICACION' || status === 'PENDIENTE')) {
+    // Para pickup, después del pago solo queda esperar o recoger
+    if (status === 'PENDIENTE') {
       updates.push({
         status: 'Listo para Recojo',
-        description: `Tu pedido está listo. Código: ${order.pickup_code || 'N/A'}`,
+        description: `Tu pedido está listo para recoger. Código: ${order.pickup_code || 'Por generar'}`,
         date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
-        isComplete: true,
+        isComplete: status === 'COMPLETADO',
         icon: 'pickup',
-        color: 'green'
+        color: status === 'COMPLETADO' ? 'green' : 'blue'
       });
-    } else {
+    }
+  } else {
+    // Para DELIVERY o PICKUP en estados avanzados: Agregar pasos de producción
+
+    // Paso 2: En Producción (solo si ya está pagado)
+    if (status === 'EN_EJECUCION' || status === 'TERMINADO' || status === 'COMPLETADO') {
       updates.push({
-        status: 'Entregado',
-        description: 'Pedido entregado exitosamente',
+        status: 'En Producción',
+        description: 'Tu pedido personalizado está siendo creado',
         date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
         isComplete: true,
-        icon: 'delivery',
+        icon: 'production',
+        color: 'blue'
+      });
+    }
+
+    // Paso 3: Producción Terminada
+    if (status === 'TERMINADO' || status === 'COMPLETADO') {
+      updates.push({
+        status: 'Producción Finalizada',
+        description: 'Tu pedido ha sido completado y está listo',
+        date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+        isComplete: true,
+        icon: 'packaging',
         color: 'green'
       });
+    }
+
+    // Paso 4: Entregado/Listo para Recojo
+    if (status === 'COMPLETADO') {
+      if (isPickup) {
+        updates.push({
+          status: 'Listo para Recojo',
+          description: `Tu pedido está listo. Código: ${order.pickup_code || 'N/A'}`,
+          date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+          isComplete: true,
+          icon: 'pickup',
+          color: 'green'
+        });
+      } else {
+        updates.push({
+          status: 'Entregado',
+          description: 'Pedido entregado exitosamente',
+          date: new Date(order.updated_at || order.created_at).toLocaleString('es-ES'),
+          isComplete: true,
+          icon: 'delivery',
+          color: 'green'
+        });
+      }
     }
   }
 
@@ -77,25 +113,25 @@ const mapOrderToTracking = (order: Order): TrackingInfo => {
   let statusBanner = '';
   switch (status) {
     case 'NO_PAGADO':
-      statusBanner = 'Esperando Pago';
+      statusBanner = isPickup ? 'Esperando Pago - Subir comprobante' : 'Esperando Confirmación de Pago';
       break;
     case 'PAGO_EN_VERIFICACION':
-      statusBanner = 'Verificando Pago';
+      statusBanner = 'Verificando Pago Automáticamente...';
       break;
     case 'PENDIENTE':
-      statusBanner = 'Pedido Confirmado';
+      statusBanner = isPickup ? `Listo para Recojo - Código: ${order.pickup_code || 'Por generar'}` : 'Pedido Confirmado - Iniciando Producción';
       break;
     case 'EN_EJECUCION':
-      statusBanner = 'En Producción';
+      statusBanner = 'En Producción - Estimado 2-3 días';
       break;
     case 'TERMINADO':
-      statusBanner = 'Producción Finalizada';
+      statusBanner = isPickup ? 'Producción Finalizada - Listo para Recojo' : 'Producción Finalizada - Preparando Envío';
       break;
     case 'COMPLETADO':
-      if (order.delivery_type === 'PICKUP') {
+      if (isPickup) {
         statusBanner = `Listo para Recojo - Código: ${order.pickup_code}`;
       } else {
-        statusBanner = 'Entregado';
+        statusBanner = 'Entregado Exitosamente';
       }
       break;
     case 'CANCELADO':
@@ -439,167 +475,6 @@ const TrackingPage: React.FC = () => {
                   <strong>Debug:</strong> Estado actual del backend: <code className="text-xs">{finalTrackingInfo.currentStatus}</code>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-      </div>
-  );
-};
-
-export default TrackingPage;
-
-  // Si no hay orderId, usar datos mock
-  const finalTrackingInfo = apiTrackingInfo || manualTrackingInfo || (orderId ? null : mockTrackingData);
-  const loading = apiLoading || localLoading;
-  const error = apiError || localError;
-
-  console.log('TrackingPage - orderId:', orderId);
-  console.log('TrackingPage - finalTrackingInfo:', finalTrackingInfo);
-
-  return (
-      <div className="pt-20 bg-indigo-100 min-h-screen">
-        
-        {/* Notificaciones */}
-        {notifications.map((notification) => (
-          <TrackingNotification
-            key={notification.id}
-            message={notification.message}
-            type={notification.type}
-            onClose={() => removeNotification(notification.id)}
-          />
-        ))}
-        
-        {/* Mensaje de bienvenida si viene del checkout */}
-        {queryOrderId && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-green-100 border border-green-300 text-green-800 px-4 sm:px-6 py-4 rounded-lg mb-4 sm:mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <span className="text-2xl mb-2 sm:mb-0 sm:mr-3 text-center sm:text-left">🎉</span>
-                <div className="text-center sm:text-left">
-                  <h3 className="font-bold text-base sm:text-lg">¡Pedido Confirmado!</h3>
-                  <p className="text-xs sm:text-sm">Tu pedido #{queryOrderId} ha sido procesado exitosamente.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-<<<<<<< HEAD
-        {/* Loading state */}
-        {loading && (
-          <div className="flex items-center justify-center min-h-[50vh] px-4">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 text-sm sm:text-base">Cargando seguimiento...</p>
-              <p className="text-gray-500 text-xs sm:text-sm mt-1">orderId: {orderId || 'no orderId'}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && !loading && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-red-100 border border-red-300 text-red-800 px-4 sm:px-6 py-4 rounded-lg mb-4 sm:mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center text-center sm:text-left">
-                  <span className="text-2xl mb-2 sm:mb-0 sm:mr-3">❌</span>
-                  <div>
-                    <h3 className="font-bold text-base sm:text-lg">Error al obtener seguimiento</h3>
-                    <p className="text-xs sm:text-sm mt-1">{error}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={refreshTracking}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors text-sm sm:text-base w-full sm:w-auto"
-                >
-                  Reintentar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Main tracking content */}
-        {finalTrackingInfo && !loading && !error && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-md">
-              {/* Header with controls */}
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">Seguimiento del Pedido</h2>
-                <div className="flex justify-center sm:justify-end">
-                  {/* Manual refresh button */}
-                  <button
-                    onClick={refreshTracking}
-                    className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
-                    disabled={loading}
-                  >
-                    <svg 
-                      className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
-                      />
-                    </svg>
-                    Actualizar
-                  </button>
-                </div>
-              </div>
-              
-              <OrderTrackingTimeline trackingInfo={finalTrackingInfo} />
-              
-              {/* Status info */}
-              {finalTrackingInfo.lastUpdated && (
-                <div className="mt-4 text-xs sm:text-sm text-gray-500 text-center">
-                  Última actualización: {new Date(finalTrackingInfo.lastUpdated).toLocaleString('es-ES')}
-                </div>
-              )}
-
-=======
-        {/* Contenido principal */}
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Cargando información del pedido...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="max-w-2xl mx-auto p-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-              <FaTimesCircle className="mx-auto text-4xl text-red-500 mb-4" />
-              <h3 className="text-lg font-semibold text-red-900 mb-2">Error</h3>
-              <p className="text-red-700">{error}</p>
-            </div>
-          </div>
-        ) : orderData?.delivery_type === 'PICKUP' ? (
-          renderPickupView()
-        ) : orderData?.delivery_type === 'DELIVERY' ? (
-          <div className="max-w-4xl mx-auto p-4">
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h2 className="text-2xl font-bold mb-4">Envío en proceso...</h2>
-              <OrderTrackingTimeline trackingInfo={trackingInfo || mockTrackingData} />
-            </div>
-          </div>
-        ) : trackingInfo ? (
-          <div className="max-w-4xl mx-auto p-4">
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h2 className="text-2xl font-bold mb-4">Envío en proceso...</h2>
-              <OrderTrackingTimeline trackingInfo={trackingInfo} />
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Cargando seguimiento...</p>
->>>>>>> e9a1dffafb99cd78a1bc0b40351705c052cf5cf3
             </div>
           </div>
         )}
