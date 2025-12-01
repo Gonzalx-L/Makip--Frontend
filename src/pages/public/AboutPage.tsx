@@ -125,7 +125,7 @@ const AboutPage: React.FC = () => {
 
 
       {/* Call to Action */}
-      <section className="bg-gradient-to-r from-teal-400 to-teal-400 py-20">
+      <section className="bg-linear-to-r from-teal-400 to-teal-400 py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
             ¿Listo para formar parte de nuestra historia?
