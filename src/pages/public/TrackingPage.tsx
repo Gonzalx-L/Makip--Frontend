@@ -6,48 +6,195 @@ import { OrderTrackingTimeline, mockTrackingData } from '../../components/featur
 // 3. Importa el tipo (para TypeScript)
 import type { TrackingInfo } from '../../types/tracking';
 // 4. (Opcional) Importa el hook para leer la URL
-import { useParams, useSearchParams } from 'react-router-dom'; 
+import { useParams, useSearchParams, useLocation } from 'react-router-dom';
+import { useAuthContext } from '../../contexts/AuthContext';
+import { orderService, type Order } from '../../services/orderService';
+import { ORDER_STATE_LABELS } from '../../constants/orderStates';
+import { FaBox, FaCheckCircle, FaClock, FaSpinner, FaTimesCircle } from 'react-icons/fa'; 
 
 const TrackingPage: React.FC = () => {
   // Obtenemos el ID del pedido desde la URL (ej: /tracking/MKP123456)
   const { orderId: paramOrderId } = useParams(); 
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { isAuthenticated } = useAuthContext();
   const queryOrderId = searchParams.get('order');
   
   // Usar el ID de los parámetros de la URL o de la query string
   const orderId = paramOrderId || queryOrderId;
   
-  // Por ahora, usamos los datos MOCK.
-  // En el futuro, aquí harías un fetch a tu API para obtener
-  // los datos de seguimiento reales usando el 'orderId'
+  // Estados para manejar los datos del pedido
+  const [orderData, setOrderData] = useState<Order | null>(null);
   const [trackingInfo, setTrackingInfo] = useState<TrackingInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Obtener datos del pedido si vienen del estado de navegación
+  const orderFromState = location.state?.order as Order | undefined;
   
   useEffect(() => {
-    console.log('TrackingPage - orderId:', orderId);
-    
-    if (orderId) {
-      // TODO: Aquí deberías hacer un fetch real al backend
-      // Por ahora usamos datos mock pero con el ID correcto
-      fetch(`/api/v1/orders/${orderId}`)
-        .then(res => res.json())
-        .then(orderData => {
-          // Mapear el estado real del backend a los pasos del tracking
-          const mappedTracking = mapOrderToTracking(orderData);
+    const fetchOrderData = async () => {
+      if (!orderId) {
+        setTrackingInfo(mockTrackingData);
+        setLoading(false);
+        return;
+      }
+
+      // Si tenemos datos del estado de navegación, usarlos primero
+      if (orderFromState) {
+        console.log('Usando datos del estado de navegación:', orderFromState);
+        setOrderData(orderFromState);
+        
+        // Si es delivery, generar datos de tracking
+        if (orderFromState.delivery_type === 'DELIVERY') {
+          const mappedTracking = mapOrderToTracking(orderFromState);
           setTrackingInfo(mappedTracking);
-        })
-        .catch(err => {
-          console.error('Error al obtener orden:', err);
-          // Fallback a datos mock
-          const updatedTrackingData = {
-            ...mockTrackingData,
-            id: orderId
-          };
-          setTrackingInfo(updatedTrackingData);
-        });
-    } else {
-      setTrackingInfo(mockTrackingData);
+        }
+        
+        setLoading(false);
+        return;
+      }
+
+      // Si no hay datos del estado y no está autenticado, mostrar error
+      if (!isAuthenticated) {
+        setError('Necesitas iniciar sesión para ver los detalles del pedido');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Usar el servicio de órdenes
+        const order = await orderService.getMyOrders();
+        const foundOrder = order.find(o => o.order_id.toString() === orderId);
+        
+        if (foundOrder) {
+          setOrderData(foundOrder);
+          
+          // Si es delivery, generar datos de tracking
+          if (foundOrder.delivery_type === 'DELIVERY') {
+            const mappedTracking = mapOrderToTracking(foundOrder);
+            setTrackingInfo(mappedTracking);
+          }
+        } else {
+          setError('Pedido no encontrado');
+        }
+        
+      } catch (err: any) {
+        console.error('Error al obtener orden:', err);
+        setError('No se pudo cargar la información del pedido');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderData();
+  }, [orderId, orderFromState, isAuthenticated]);
+
+  // Función para obtener el icono del estado
+  const getStatusIcon = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'NO_PAGADO':
+        return <FaClock className="text-gray-500" />;
+      case 'PAGO_EN_VERIFICACION':
+        return <FaSpinner className="text-orange-500 animate-spin" />;
+      case 'PENDIENTE':
+        return <FaCheckCircle className="text-green-500" />;
+      case 'EN_EJECUCION':
+        return <FaSpinner className="text-blue-500 animate-spin" />;
+      case 'TERMINADO':
+        return <FaBox className="text-purple-500" />;
+      case 'COMPLETADO':
+        return <FaCheckCircle className="text-green-600" />;
+      case 'CANCELADO':
+        return <FaTimesCircle className="text-red-500" />;
+      default:
+        return <FaClock className="text-gray-500" />;
     }
-  }, [orderId]);
+  };
+
+  // Renderizado simplificado para recojo en tienda
+  const renderPickupView = () => {
+    if (!orderData) return null;
+
+    const statusLabel = ORDER_STATE_LABELS[orderData.status as keyof typeof ORDER_STATE_LABELS] || orderData.status;
+
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          {/* Header */}
+          <div className="bg-teal-50 px-6 py-4 border-b border-teal-100">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-teal-900">
+                Pedido #{orderData.order_id}
+              </h2>
+              <span className="text-sm text-teal-600 font-medium">Recojo en Tienda</span>
+            </div>
+          </div>
+
+          {/* Contenido principal */}
+          <div className="p-6 space-y-6">
+            {/* Estado actual */}
+            <div className="text-center">
+              <div className="flex justify-center mb-3">
+                <div className="w-16 h-16 flex items-center justify-center">
+                  <div className="text-4xl">
+                    {getStatusIcon(orderData.status)}
+                  </div>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Estado Actual</h3>
+              <p className="text-xl font-bold text-teal-600">{statusLabel}</p>
+            </div>
+
+            {/* Código de recojo */}
+            {orderData.pickup_code && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                <h4 className="text-lg font-semibold text-green-900 mb-3">
+                  Código de Recojo
+                </h4>
+                <div className="bg-white border-2 border-green-300 rounded-lg p-4 mb-3">
+                  <p className="text-3xl font-bold font-mono text-green-800">
+                    {orderData.pickup_code}
+                  </p>
+                </div>
+                <p className="text-sm text-green-700">
+                  Presenta este código en la tienda para recoger tu pedido
+                </p>
+              </div>
+            )}
+
+            {/* Información adicional */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">Total:</span>
+                  <span className="ml-2 font-bold text-gray-900">
+                    S/ {typeof orderData.total_price === 'number' ? orderData.total_price.toFixed(2) : '0.00'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Fecha:</span>
+                  <span className="ml-2 text-gray-600">
+                    {new Date(orderData.created_at).toLocaleDateString('es-ES')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Información de contacto */}
+            <div className="text-center text-sm text-gray-600">
+              <p className="font-medium mb-1">Horario de atención:</p>
+              <p>Lunes a Sábado: 9:00 AM - 6:00 PM</p>
+              <p className="mt-2">📞 +51 981 266 608</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Función para mapear la orden del backend al formato de tracking
   const mapOrderToTracking = (order: any): TrackingInfo => {
@@ -144,8 +291,32 @@ const TrackingPage: React.FC = () => {
           </div>
         )}
         
-        {/* 2. Muestra el componente "feature" */}
-        {trackingInfo ? (
+        {/* Contenido principal */}
+        {loading ? (
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Cargando información del pedido...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="max-w-2xl mx-auto p-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+              <FaTimesCircle className="mx-auto text-4xl text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-red-900 mb-2">Error</h3>
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        ) : orderData?.delivery_type === 'PICKUP' ? (
+          renderPickupView()
+        ) : orderData?.delivery_type === 'DELIVERY' ? (
+          <div className="max-w-4xl mx-auto p-4">
+            <div className="bg-white rounded-lg p-6 shadow-md">
+              <h2 className="text-2xl font-bold mb-4">Envío en proceso...</h2>
+              <OrderTrackingTimeline trackingInfo={trackingInfo || mockTrackingData} />
+            </div>
+          </div>
+        ) : trackingInfo ? (
           <div className="max-w-4xl mx-auto p-4">
             <div className="bg-white rounded-lg p-6 shadow-md">
               <h2 className="text-2xl font-bold mb-4">Envío en proceso...</h2>
@@ -157,7 +328,6 @@ const TrackingPage: React.FC = () => {
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Cargando seguimiento...</p>
-              <p className="text-gray-500 text-sm">orderId: {orderId || 'no orderId'}</p>
             </div>
           </div>
         )}

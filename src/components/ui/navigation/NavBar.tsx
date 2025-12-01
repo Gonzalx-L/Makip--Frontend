@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import logoMakip from '../../../assets/Makip-logo.png';
 import { useCartStore } from '../../../store/cartStore'; 
-import { FaShoppingCart, FaUser, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { FaShoppingCart, FaUser, FaSignOutAlt, FaBars, FaTimes, FaClipboardList } from 'react-icons/fa';
 import { useAuthContext } from '../../../contexts/AuthContext'; 
 
 export const NavBar = () => {
@@ -83,6 +83,19 @@ export const NavBar = () => {
             >
               CONTACTO
             </Link>
+            {/* Botón PEDIDOS - Solo visible para usuarios autenticados */}
+            {isAuthenticated && user && (
+              <Link 
+                to="/mis-pedidos" 
+                className={isActive('/mis-pedidos') 
+                  ? "text-white px-3 py-2 border-b-2 border-white font-medium flex items-center space-x-1" 
+                  : "text-blue-100 px-3 py-2 hover:text-white transition-colors flex items-center space-x-1"
+                }
+              >
+                <FaClipboardList className="text-sm" />
+                <span>PEDIDOS</span>
+              </Link>
+            )}
           </div>
 
           {/* Desktop Right side actions */}
@@ -196,6 +209,22 @@ export const NavBar = () => {
             >
               CONTACTO
             </Link>
+
+            {/* Botón PEDIDOS móvil - Solo visible para usuarios autenticados */}
+            {isAuthenticated && user && (
+              <Link 
+                to="/mis-pedidos" 
+                onClick={closeMobileMenu}
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isActive('/mis-pedidos') 
+                    ? "text-white bg-gray-800" 
+                    : "text-blue-100 hover:text-white hover:bg-gray-700"
+                } flex items-center space-x-2`}
+              >
+                <FaClipboardList className="text-sm" />
+                <span>PEDIDOS</span>
+              </Link>
+            )}
 
             {/* Mobile User Authentication Section */}
             <div className="pt-4 border-t border-gray-700 mt-4">
