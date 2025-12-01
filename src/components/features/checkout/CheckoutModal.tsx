@@ -417,7 +417,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       rel="noopener noreferrer"
                       className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700 transition inline-flex items-center gap-1"
                     >
-                      📱 Contactar por WhatsApp
+                      Contactar por WhatsApp
                     </a>
                   )}
                   <button 
@@ -432,7 +432,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           )}
           {step === 'shipping' ? (
             <div>
-              {/* Formulario de Cliente - DEMO VERSION */}
+              {/* Formulario de Cliente */}
               {/* Indicador de datos autocompletados */}
               {isAuthenticated && user && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2">
@@ -759,20 +759,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Botones de acción */}
               <div className="space-y-3">
-                {/* Botón principal para descargar PDF */}
-                <button
-                  onClick={() => {
-                    if (orderResult?.order_id) {
-                      // URL para descargar la boleta en PDF
-                      const pdfUrl = `/api/orders/${orderResult.order_id}/receipt-pdf`;
-                      window.open(pdfUrl, '_blank');
-                    }
-                  }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                >
-                  <FaDownload className="w-5 h-5" />
-                  <span>Descargar Boleta PDF</span>
-                </button>
                 
                 {/* Botones secundarios */}
                 <div className="flex space-x-3">
