@@ -724,7 +724,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Instrucciones */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h5 className="font-semibold text-blue-800 mb-3">📋 Instrucciones para el Recojo:</h5>
+                <h5 className="font-semibold text-blue-800 mb-3">Instrucciones para el Recojo:</h5>
                 <div className="space-y-2 text-sm text-blue-700">
                   <p>• <strong>Presenta tu código</strong> de pedido al llegar a la tienda</p>
                   <p>• <strong>Horario de atención:</strong> Lunes a Sábado, 9:00 AM - 6:00 PM</p>
