@@ -5,7 +5,7 @@ import { CheckoutLoading } from './CheckoutLoading';
 import { orderService, type CreateOrderRequest, type Order } from '../../../services/orderService';
 import { uploadPaymentProofPublic, uploadPaymentProof } from '../../../services/paymentProofService';
 import { useAuthContext } from '../../../contexts/AuthContext';
-import QRImage from '../../../assets/QR.png';
+import QRImage from '../../../assets/qr1.png';
 import { useNavigate } from 'react-router-dom';
 
 interface CheckoutModalProps {
@@ -901,8 +901,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
                   
                   <div className="text-center mt-4">
-                    <p className="text-xs text-gray-500">Gloria E. Inquillay C.</p>
-                    <p className="text-xs font-mono text-gray-400">923 119 167</p>
+                    <p className="text-xs text-gray-500">Gonzalo Lozano S.</p>
+                    <p className="text-xs font-mono text-gray-400">982 630 958</p>
                   </div>
                 </div>
               </div>
