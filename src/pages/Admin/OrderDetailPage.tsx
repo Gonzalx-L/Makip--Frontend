@@ -7,8 +7,14 @@ import {
   ArrowLeft,
   CheckCircle,
   Package,
+  Upload,
+  Truck,
+  Eye,
+  Mail,
+  X,
 } from "lucide-react";
 import axios from "axios";
+import { uploadShippingReceipt, resendShippingEmail } from "../../services/shippingReceiptService";
 
 // --- Type: OrderStatus ---
 // IMPORTANTE: Usar EXACTAMENTE los mismos valores que el backend (SNAKE_CASE MAYÚSCULAS)
@@ -61,6 +67,12 @@ interface OrderDetails {
   delivery_type: 'DELIVERY' | 'PICKUP';
   pickup_code: string | null;
   items: OrderItem[];
+  // Datos de envío
+  shipping_receipt_url?: string | null;
+  shipping_tracking_number?: string | null;
+  shipping_company?: string | null;
+  shipping_destination?: string | null;
+  shipping_date?: string | null;
 }
 
 interface ErrorResponse {
@@ -86,6 +98,15 @@ const OrderDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  
+  // Estados para la boleta de envío
+  const [shippingFile, setShippingFile] = useState<File | null>(null);
+  const [shippingPreview, setShippingPreview] = useState<string>('');
+  const [isUploadingShipping, setIsUploadingShipping] = useState(false);
+  const [shippingUploadSuccess, setShippingUploadSuccess] = useState(false);
+  const [shippingUploadError, setShippingUploadError] = useState<string>('');
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [resendEmailMessage, setResendEmailMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // --- Cargar Datos del Pedido ---
   useEffect(() => {
@@ -226,6 +247,111 @@ const OrderDetailPage: React.FC = () => {
       alert(`❌ ${msg}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // --- Funciones para Boleta de Envío ---
+  const handleShippingFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      setShippingUploadError('Solo se permiten archivos JPG, PNG o JPEG');
+      return;
+    }
+
+    // Validar tamaño (10MB)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      setShippingUploadError('El archivo debe ser menor a 10MB');
+      return;
+    }
+
+    // Guardar archivo y crear preview
+    setShippingFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setShippingPreview(previewUrl);
+    setShippingUploadError('');
+  };
+
+  const handleUploadShippingReceipt = async () => {
+    if (!shippingFile || !order) return;
+
+    const confirmUpload = confirm(
+      '📦 ¿Subir boleta de envío?\n\n' +
+      '✅ Se extraerán los datos automáticamente con OCR\n' +
+      '📧 Se enviará un email al cliente con la boleta adjunta'
+    );
+
+    if (!confirmUpload) return;
+
+    setIsUploadingShipping(true);
+    setShippingUploadError('');
+    setShippingUploadSuccess(false);
+
+    try {
+      const response = await uploadShippingReceipt(order.order_id, shippingFile);
+      
+      // Actualizar la orden con los nuevos datos
+      setOrder({
+        ...order,
+        shipping_receipt_url: response.shippingReceiptUrl,
+        shipping_tracking_number: response.shippingData.trackingNumber,
+        shipping_company: response.shippingData.company,
+        shipping_destination: response.shippingData.destination,
+        shipping_date: response.shippingData.shippingDate,
+      });
+
+      setShippingUploadSuccess(true);
+      setShippingFile(null);
+      setShippingPreview('');
+      
+      alert('✅ Boleta subida exitosamente\n\n📧 Email enviado al cliente');
+      
+      setTimeout(() => setShippingUploadSuccess(false), 3000);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al subir la boleta';
+      setShippingUploadError(errorMessage);
+      alert(`❌ ${errorMessage}`);
+    } finally {
+      setIsUploadingShipping(false);
+    }
+  };
+
+  const handleCancelShippingUpload = () => {
+    setShippingFile(null);
+    setShippingPreview('');
+    setShippingUploadError('');
+  };
+
+  const handleResendShippingEmail = async () => {
+    if (!order) return;
+
+    const confirmResend = confirm('📧 ¿Reenviar el email de envío al cliente?');
+    if (!confirmResend) return;
+
+    setIsResendingEmail(true);
+    setResendEmailMessage(null);
+
+    try {
+      const response = await resendShippingEmail(order.order_id);
+      setResendEmailMessage({ 
+        type: 'success', 
+        text: `✅ ${response.message || 'Email reenviado exitosamente'}` 
+      });
+      
+      // Auto-limpiar mensaje después de 3 segundos
+      setTimeout(() => setResendEmailMessage(null), 3000);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al reenviar el email';
+      setResendEmailMessage({ 
+        type: 'error', 
+        text: `❌ ${errorMessage}` 
+      });
+    } finally {
+      setIsResendingEmail(false);
     }
   };
 
@@ -451,6 +577,179 @@ const OrderDetailPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Sección de Boleta de Envío - Solo visible si la orden está COMPLETADA */}
+          {order.status === 'COMPLETADO' && (
+            <div className='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+              <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2'>
+                <Truck className='w-5 h-5' />
+                📦 Envío de la Orden
+              </h2>
+
+              {!order.shipping_receipt_url ? (
+                // NO HAY BOLETA SUBIDA - Mostrar formulario de upload
+                <div className='space-y-4'>
+                  {!shippingFile ? (
+                    <>
+                      <input
+                        type='file'
+                        accept='image/jpeg,image/jpg,image/png'
+                        onChange={handleShippingFileSelect}
+                        className='hidden'
+                        id='shipping-receipt-upload'
+                      />
+                      <label
+                        htmlFor='shipping-receipt-upload'
+                        className='border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors'>
+                        <Upload className='w-12 h-12 text-gray-400 mb-3' />
+                        <p className='text-sm font-medium text-gray-700 mb-1'>
+                          📤 Subir Boleta de Envío
+                        </p>
+                        <p className='text-xs text-gray-500 text-center'>
+                          Arrastra la imagen aquí o haz clic para seleccionar
+                        </p>
+                        <p className='text-xs text-gray-400 mt-2'>
+                          Formatos: JPG, PNG, JPEG - Máx. 10MB
+                        </p>
+                      </label>
+                    </>
+                  ) : (
+                    // Preview del archivo seleccionado
+                    <div className='space-y-3'>
+                      <div className='border rounded-lg p-4 bg-gray-50'>
+                        <div className='flex items-start gap-4'>
+                          <img
+                            src={shippingPreview}
+                            alt='Preview de boleta'
+                            className='w-24 h-24 object-cover rounded border'
+                          />
+                          <div className='flex-1'>
+                            <p className='text-sm font-medium text-gray-900'>
+                              {shippingFile.name}
+                            </p>
+                            <p className='text-xs text-gray-500 mt-1'>
+                              {(shippingFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                            <button
+                              onClick={handleCancelShippingUpload}
+                              className='mt-2 text-sm text-red-600 hover:text-red-700 flex items-center gap-1'>
+                              <X className='w-4 h-4' />
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleUploadShippingReceipt}
+                        disabled={isUploadingShipping}
+                        className='w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'>
+                        {isUploadingShipping ? (
+                          <>
+                            <Loader2 className='w-5 h-5 animate-spin' />
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            🚀 Subir y Enviar Email
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {shippingUploadError && (
+                    <div className='p-3 bg-red-50 border border-red-200 rounded-lg'>
+                      <p className='text-sm text-red-700 flex items-center gap-2'>
+                        <AlertCircle className='w-4 h-4' />
+                        {shippingUploadError}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // YA HAY BOLETA SUBIDA - Mostrar información
+                <div className='space-y-4'>
+                  <div className='p-4 bg-green-50 border border-green-200 rounded-lg'>
+                    <p className='text-sm font-medium text-green-800 flex items-center gap-2 mb-3'>
+                      <CheckCircle className='w-5 h-5' />
+                      ✅ Boleta de Envío Registrada
+                    </p>
+                    <div className='space-y-2 text-sm'>
+                      {order.shipping_company && (
+                        <p className='text-gray-700'>
+                          <strong>🚚 Empresa:</strong> {order.shipping_company}
+                        </p>
+                      )}
+                      {order.shipping_tracking_number && (
+                        <p className='text-gray-700'>
+                          <strong>📦 N° de Guía:</strong> {order.shipping_tracking_number}
+                        </p>
+                      )}
+                      {order.shipping_destination && (
+                        <p className='text-gray-700'>
+                          <strong>📍 Destino:</strong> {order.shipping_destination}
+                        </p>
+                      )}
+                      {order.shipping_date && (
+                        <p className='text-gray-700'>
+                          <strong>📅 Fecha de Envío:</strong>{' '}
+                          {new Date(order.shipping_date).toLocaleDateString('es-ES')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className='flex gap-2'>
+                    <a
+                      href={order.shipping_receipt_url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 flex items-center justify-center gap-2 text-sm'>
+                      <Eye className='w-4 h-4' />
+                      Ver Boleta
+                    </a>
+                    <button
+                      onClick={handleResendShippingEmail}
+                      disabled={isResendingEmail}
+                      className='flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed'>
+                      {isResendingEmail ? (
+                        <Loader2 className='w-4 h-4 animate-spin' />
+                      ) : (
+                        <Mail className='w-4 h-4' />
+                      )}
+                      {isResendingEmail ? 'Enviando...' : 'Reenviar Email'}
+                    </button>
+                  </div>
+
+                  {resendEmailMessage && (
+                    <div
+                      className={`mt-3 p-3 rounded-lg border flex items-start gap-2 ${
+                        resendEmailMessage.type === 'success'
+                          ? 'bg-green-50 border-green-200 text-green-700'
+                          : 'bg-red-50 border-red-200 text-red-700'
+                      }`}>
+                      {resendEmailMessage.type === 'success' ? (
+                        <CheckCircle className='w-5 h-5 flex-shrink-0 mt-0.5' />
+                      ) : (
+                        <AlertCircle className='w-5 h-5 flex-shrink-0 mt-0.5' />
+                      )}
+                      <p className='text-sm'>{resendEmailMessage.text}</p>
+                    </div>
+                  )}
+
+                  {shippingUploadSuccess && (
+                    <div className='p-3 bg-green-50 border border-green-200 rounded-lg'>
+                      <p className='text-sm text-green-700 flex items-center gap-2'>
+                        <CheckCircle className='w-4 h-4' />
+                        Boleta actualizada exitosamente
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
