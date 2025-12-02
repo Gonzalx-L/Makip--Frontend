@@ -25,6 +25,8 @@ interface PersonalizationMetadata {
   coords_y: number | "";
   max_width: number | "";
   allows_image: boolean;
+  allows_text: boolean;
+  max_text_length: number | "";
 }
 
 interface VariantOption {
@@ -124,6 +126,8 @@ const ProductForm: React.FC = () => {
       coords_y: "",
       max_width: "",
       allows_image: false,
+      allows_text: false,
+      max_text_length: "",
     },
     variants: [],
   });
@@ -176,6 +180,8 @@ const ProductForm: React.FC = () => {
             coords_y: product.personalization_metadata?.coords_y ?? "",
             max_width: product.personalization_metadata?.max_width ?? "",
             allows_image: product.personalization_metadata?.allows_image ?? false,
+            allows_text: product.personalization_metadata?.allows_text ?? false,
+            max_text_length: product.personalization_metadata?.max_text_length ?? "",
           },
           variants: parseVariantsFromDB(product.variants),
         });
@@ -223,11 +229,24 @@ const ProductForm: React.FC = () => {
         }));
         return;
       }
+
+      if (field === "text") {
+        // Handle checkbox for allows_text
+        setFormData((prev) => ({
+          ...prev,
+          personalization_metadata: {
+            ...prev.personalization_metadata,
+            allows_text: (e.target as HTMLInputElement).checked,
+          },
+        }));
+        return;
+      }
       
       const map: Record<string, keyof PersonalizationMetadata> = {
         x: "coords_x",
         y: "coords_y",
         width: "max_width",
+        textlength: "max_text_length",
       };
 
       setFormData((prev) => ({
@@ -392,6 +411,8 @@ const ProductForm: React.FC = () => {
         coords_y: Number(formData.personalization_metadata.coords_y) || 0,
         max_width: Number(formData.personalization_metadata.max_width) || 0,
         allows_image: formData.personalization_metadata.allows_image,
+        allows_text: formData.personalization_metadata.allows_text,
+        max_text_length: Number(formData.personalization_metadata.max_text_length) || 0,
       },
       variants: serializeVariantsForDB(formData.variants),
     };
@@ -642,18 +663,53 @@ const ProductForm: React.FC = () => {
               </div>
             </div>
 
-            <div className='flex items-center space-x-3 mt-4'>
-              <input
-                type='checkbox'
-                id='allows_image'
-                name='personalization_image'
-                checked={formData.personalization_metadata.allows_image}
-                onChange={handleChange}
-                className='h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
-              />
-              <label htmlFor='allows_image' className='text-sm font-medium text-gray-700'>
-                Permitir subir imagen personalizada y generacion de imagen por I.A
-              </label>
+            <div className='space-y-3 mt-4'>
+              <div className='flex items-center space-x-3'>
+                <input
+                  type='checkbox'
+                  id='allows_text'
+                  name='personalization_text'
+                  checked={formData.personalization_metadata.allows_text}
+                  onChange={handleChange}
+                  className='h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+                />
+                <label htmlFor='allows_text' className='text-sm font-medium text-gray-700'>
+                  Permitir agregar texto personalizado
+                </label>
+              </div>
+
+              {formData.personalization_metadata.allows_text && (
+                <div className='ml-7'>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>
+                    Longitud máxima del texto:
+                  </label>
+                  <input
+                    type='number'
+                    name='personalization_textlength'
+                    value={formData.personalization_metadata.max_text_length}
+                    onChange={handleChange}
+                    min={1}
+                    max={100}
+                    placeholder='Ej: 20'
+                    className='border rounded-md p-2 w-32'
+                  />
+                  <span className='text-xs text-gray-500 ml-2'>caracteres</span>
+                </div>
+              )}
+
+              <div className='flex items-center space-x-3'>
+                <input
+                  type='checkbox'
+                  id='allows_image'
+                  name='personalization_image'
+                  checked={formData.personalization_metadata.allows_image}
+                  onChange={handleChange}
+                  className='h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+                />
+                <label htmlFor='allows_image' className='text-sm font-medium text-gray-700'>
+                  Permitir subir imagen personalizada y generacion de imagen por I.A
+                </label>
+              </div>
             </div>
           </div>
 

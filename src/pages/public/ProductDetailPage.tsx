@@ -45,6 +45,7 @@ const mockProducts: Product[] = [
     personalization_metadata: {
       cost: 2000,
       max_text_length: 15,
+      allows_text: true,
       allows_image: true,
       allowed_formats: ['png']
     },
@@ -65,7 +66,8 @@ const mockProducts: Product[] = [
     },
     personalization_metadata: {
       cost: 8000,
-      max_text_length: 30
+      max_text_length: 30,
+      allows_text: true
     },
     is_active: true,
     category_name: 'Ropa'
@@ -84,7 +86,8 @@ const mockProducts: Product[] = [
     },
     personalization_metadata: {
       cost: 5000,
-      max_text_length: 25
+      max_text_length: 25,
+      allows_text: true
     },
     is_active: true,
     category_name: 'Accesorios'
@@ -344,7 +347,8 @@ const ProductDetailPage: React.FC = () => {
     // Validar personalización si está disponible
     if (product.personalization_metadata) {
       // Validar texto personalizado
-      if (product.personalization_metadata.max_text_length && 
+      if (product.personalization_metadata.allows_text && 
+          product.personalization_metadata.max_text_length && 
           product.personalization_metadata.max_text_length > 0) {
         if (!personalization.text || personalization.text.trim() === '') {
           missingFields.push('Texto personalizado');
@@ -480,7 +484,7 @@ const ProductDetailPage: React.FC = () => {
               <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Personalización</h3>
               
               {/* Texto personalizado */}
-              {product.personalization_metadata.max_text_length && product.personalization_metadata.max_text_length > 0 && (
+              {product.personalization_metadata.allows_text && product.personalization_metadata.max_text_length && product.personalization_metadata.max_text_length > 0 && (
                 <div className="mb-4">
                   <label className={`block text-sm font-medium mb-2 ${validationErrors.includes('Texto personalizado') ? 'text-red-700' : 'text-gray-700'}`}>
                     Texto personalizado: <span className="text-teal-500">*</span>
