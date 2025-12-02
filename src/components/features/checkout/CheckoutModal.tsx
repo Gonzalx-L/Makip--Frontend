@@ -5,7 +5,7 @@ import { CheckoutLoading } from './CheckoutLoading';
 import { orderService, type CreateOrderRequest, type Order } from '../../../services/orderService';
 import { uploadPaymentProofPublic, uploadPaymentProof } from '../../../services/paymentProofService';
 import { useAuthContext } from '../../../contexts/AuthContext';
-import QRImage from '../../../assets/QR.png';
+import QRImage from '../../../assets/qr1.png';
 import { useNavigate } from 'react-router-dom';
 
 interface CheckoutModalProps {

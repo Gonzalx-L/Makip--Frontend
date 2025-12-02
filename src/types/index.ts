@@ -31,6 +31,7 @@ export interface PersonalizationMetadata {
   coords_y?: number;
   max_text_length?: number;
   allows_image?: boolean;
+  allows_text?: boolean;
   allowed_formats?: string[];
   [key: string]: any;
 }
