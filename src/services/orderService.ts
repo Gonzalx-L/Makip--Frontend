@@ -1,5 +1,4 @@
 import { apiClient } from './api';
-import type { Product } from '../types';
 
 export interface CreateOrderRequest {
   items: Array<{

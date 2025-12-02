@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaCheck, FaTruck, FaCommentDots, FaCreditCard, FaGear, FaBox, FaXmark } from 'react-icons/fa6';
+import { FaTruck, FaCommentDots, FaCreditCard, FaGear, FaBox, FaXmark } from 'react-icons/fa6';
 import type { OrderStatus } from '../../../types/tracking';
 
 // Definimos los estados visuales que puede tener un paso

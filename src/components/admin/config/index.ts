@@ -1,6 +1,6 @@
 // Componentes de configuración para administración
-export { default as QuickSettings } from './QuickSettings';
-export { default as SystemConfig } from './SystemConfig';
+export { default as QuickSettings } from '../QuickSettings';
+export { default as SystemConfig } from '../SystemConfig';
 
 // Tipos para configuración
-export type { QuickSettingsData } from './QuickSettings';
+export type { QuickSettingsData } from '../QuickSettings';

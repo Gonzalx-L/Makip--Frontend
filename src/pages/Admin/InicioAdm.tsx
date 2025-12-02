@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
 import apiClient from "../../services/admi/apiClient";
-import { DollarSign, Users, Package, Loader2, AlertCircle } from "lucide-react";
+import { DollarSign, Users, Package, Loader2 } from "lucide-react";
 
 // 1. IMPORTACIONES DE POWER BI
 import { PowerBIEmbed } from 'powerbi-client-react';

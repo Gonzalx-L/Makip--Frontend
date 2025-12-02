@@ -130,7 +130,7 @@ const OrdersPage: React.FC = () => {
   };
 
   // Cambiar estado de orden con notificaciones
-  const handleChangeStatus = async (orderId: number, newStatus: OrderStatus) => {
+  /* const handleChangeStatus = async (orderId: number, newStatus: OrderStatus) => {
     const confirmMsg = 
       newStatus === 'EN_EJECUCION' ? '🏭 ¿Iniciar producción de esta orden?\n\n✅ Se enviará correo y WhatsApp al cliente' :
       newStatus === 'TERMINADO' ? '✅ ¿Marcar como terminado?\n\n📧 El cliente será notificado que su pedido está listo' :
@@ -223,7 +223,7 @@ const OrdersPage: React.FC = () => {
         alert(`❌ Error al actualizar el estado:\n\n${errorMsg}\n\n💡 Abre la consola del navegador (F12) para más detalles`);
       }
     }
-  };
+  }; */
 
   if (isLoading) {
     return (

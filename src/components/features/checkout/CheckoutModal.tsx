@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCartStore } from '../../../store/cartStore';
-import { FaTimes, FaUpload, FaDownload, FaWhatsapp } from 'react-icons/fa';
+import { FaTimes, FaUpload, FaWhatsapp } from 'react-icons/fa';
 import { CheckoutLoading } from './CheckoutLoading';
 import { orderService, type CreateOrderRequest, type Order } from '../../../services/orderService';
 import { uploadPaymentProofPublic, uploadPaymentProof } from '../../../services/paymentProofService';

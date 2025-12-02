@@ -4,7 +4,7 @@ import type { Product } from '../../../types';
 import { Link } from 'react-router-dom';
 
 // 1. IMPORTAMOS EL STORE DEL CARRITO
-import { useCartStore } from '../../../store/cartStore';
+// import { useCartStore } from '../../../store/cartStore';
 
 interface ProductCardProps {
   product: Product;
@@ -12,10 +12,10 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   // 2. OBTENEMOS LA ACCIÓN 'addToCart'
-  const addToCart = useCartStore((state) => state.addToCart);
+  // const addToCart = useCartStore((state) => state.addToCart);
 
   // 3. Lógica de imagen actualizada para el backend
-  const productImage = product.base_image_url || '/src/assets/producto-placeholder.jpg';
+  // const productImage = product.base_image_url || '/src/assets/producto-placeholder.jpg';
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-shadow duration-300 hover:shadow-xl group">

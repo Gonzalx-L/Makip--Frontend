@@ -65,7 +65,7 @@ export const authService = {
     const response = await apiClient.post('/auth/google', { token: googleToken });
     // Huber usaba 'token' aquí, lo cambiamos a 'jwtToken' para evitar conflicto de nombres
     // y lo guardamos como 'authToken' para mantener consistencia con tu app.
-    const { client, token: jwtToken, isNewUser } = response.data;
+    const { client, token: jwtToken, isNewUser: _isNewUser } = response.data;
     
     if (jwtToken) localStorage.setItem('authToken', jwtToken); // CORREGIDO: Usamos 'authToken'
     localStorage.setItem('client', JSON.stringify(client));
@@ -77,7 +77,7 @@ export const authService = {
   // Iniciar sesión tradicional
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/login', credentials);
-    const { client, token, isNewUser } = response.data;
+    const { client, token, isNewUser: _isNewUser } = response.data;
     
     // RESUELTO EL CONFLICTO: Usamos 'authToken'
     if (token) localStorage.setItem('authToken', token);
@@ -93,7 +93,7 @@ export const authService = {
   // ==========================
   register: async (userData: RegisterData): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/register', userData);
-    const { client, token, isNewUser } = response.data;
+    const { client, token, isNewUser: _isNewUser } = response.data;
     
     // RESUELTO EL CONFLICTO: Usamos 'authToken'
     if (token) localStorage.setItem('authToken', token);
@@ -110,7 +110,7 @@ export const authService = {
   // Enviar correo de recuperación
   requestPasswordReset: async (
     email: string
-  ): Promise<BasicMessageResponse> => {
+  ): Promise<{ message: string }> => {
     const response = await apiClient.post("/auth/forgot-password", { email });
     return response.data; // { message: string }
   },

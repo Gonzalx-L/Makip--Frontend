@@ -4,10 +4,9 @@ import { useApi } from '../../hooks/useApi';
 import { productService } from '../../services/productService';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthContext } from '../../contexts/AuthContext';
-import ImageUpload from '../../components/shared/ImageUpload';
 import { uploadLogo, validateLogoFile } from '../../services/logoUploadService';
 import { Upload, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import type { ProductVariants, PersonalizationData, Product } from '../../types';
+import type { PersonalizationData, Product } from '../../types';
 
 // Datos mock para cuando no hay productos en la BD
 const mockProducts: Product[] = [
@@ -98,7 +97,7 @@ const ProductDetailPage: React.FC = () => {
   const { isAuthenticated } = useAuthContext();
   
   // Todos los hooks ANTES de cualquier lógica condicional
-  const { data: backendProduct, loading, error } = useApi(
+  const { data: backendProduct, loading } = useApi(
     () => productService.getById(Number(id || '0')), 
     [id]
   );

@@ -11,8 +11,7 @@ import {
   Lock,
   Bell,
   Palette,
-  Globe,
-  Smartphone
+  Globe
 } from "lucide-react";
 import apiClient from "../../services/admi/apiClient";
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaGoogle, FaUser, FaUserPlus } from 'react-icons/fa';
+import { FaUser, FaUserPlus } from 'react-icons/fa';
 import { GoogleLoginButton } from './GoogleLoginButton';
 import { TraditionalLoginForm } from './TraditionalLoginForm';
 import { TraditionalRegisterForm } from './TraditionalRegisterForm';

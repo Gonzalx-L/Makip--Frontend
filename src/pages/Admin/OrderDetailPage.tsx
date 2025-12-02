@@ -6,14 +6,12 @@ import {
   AlertCircle,
   ArrowLeft,
   CheckCircle,
-  Package,
   Upload,
   Truck,
   Eye,
   Mail,
   X,
 } from "lucide-react";
-import axios from "axios";
 import { uploadShippingReceipt, resendShippingEmail } from "../../services/shippingReceiptService";
 
 // --- Type: OrderStatus ---
@@ -75,19 +73,19 @@ interface OrderDetails {
   shipping_date?: string | null;
 }
 
-interface ErrorResponse {
-  message?: string;
-}
+// interface ErrorResponse {
+//   message?: string;
+// }
 
 // Estados válidos para el admin
-const statusOptions: OrderStatus[] = [
-  "NO_PAGADO",
-  "PAGO_EN_VERIFICACION",
-  "PENDIENTE",
-  "EN_EJECUCION",
-  "TERMINADO",
-  "CANCELADO",
-];
+// const statusOptions: OrderStatus[] = [
+//   "NO_PAGADO",
+//   "PAGO_EN_VERIFICACION",
+//   "PENDIENTE",
+//   "EN_EJECUCION",
+//   "TERMINADO",
+//   "CANCELADO",
+// ];
 
 const OrderDetailPage: React.FC = () => {
   const { id } = useParams();

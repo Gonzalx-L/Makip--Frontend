@@ -24,10 +24,10 @@ const LoginPage: React.FC = () => {
     setErrorMessage('');
   };
 
-  const clearMessages = () => {
+  /* const clearMessages = () => {
     setErrorMessage('');
     setSuccessMessage('');
-  };
+  }; */
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
