@@ -4,17 +4,10 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'Makip--Frontend/**' # Solo se activa si tocas cosas en esta carpeta
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    # 1. Definimos que todos los comandos 'run' se ejecuten dentro de tu carpeta
-    defaults:
-      run:
-        working-directory: ./Makip--Frontend
 
     steps:
       - name: Checkout code
@@ -25,7 +18,6 @@ jobs:
         with:
           node-version: '18'
 
-      # Como definimos el working-directory arriba, esto ya corre en la carpeta correcta
       - name: Install and Build
         run: |
           npm install
@@ -39,7 +31,6 @@ jobs:
       - name: Upload to Bucket
         uses: google-github-actions/upload-cloud-storage@v2
         with:
-          # Aquí indicamos la ruta completa desde la raíz del repo hasta la carpeta dist
-          path: './Makip--Frontend/dist' 
+          path: './dist' 
           destination: 'makipfrontend'
           parent: false
