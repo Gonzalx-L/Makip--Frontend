@@ -1,0 +1,45 @@
+name: Deploy Frontend to Bucket
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Makip--Frontend/**' # Solo se activa si tocas cosas en esta carpeta
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # 1. Definimos que todos los comandos 'run' se ejecuten dentro de tu carpeta
+    defaults:
+      run:
+        working-directory: ./Makip--Frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # Como definimos el working-directory arriba, esto ya corre en la carpeta correcta
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+
+      - name: Auth with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Upload to Bucket
+        uses: google-github-actions/upload-cloud-storage@v2
+        with:
+          # Aquí indicamos la ruta completa desde la raíz del repo hasta la carpeta dist
+          path: './Makip--Frontend/dist' 
+          destination: 'makipfrontend'
+          parent: false
